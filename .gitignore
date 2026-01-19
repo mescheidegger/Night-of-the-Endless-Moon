@@ -1,0 +1,9 @@
+/.vscode
+/dist
+/node_modules
+/public
+/unpacked_assets
+counter.js
+*.md
+!README.md
+vite.config.js

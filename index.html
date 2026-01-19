@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Ensures the layout scales properly on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0b0f18" />
+
+    <!-- iOS add-to-home-screen support -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="/icons/icon-192-black.png" />
+
+
+    <title>Night of the Blood Moon</title>
+
+    <style>
+      /* 
+        Remove browser default margins and make the page fill the viewport.
+        Dark background sets the scene for a top-down/night atmosphere.
+      */
+      html, body { 
+        height: 100%; 
+        margin: 0; 
+        background: #0b0f18;
+        overflow: hidden;
+      }
+
+      /* 
+        #app is a container that centers the game canvas both vertically and horizontally.
+      */
+      #app { 
+        height: 100%;
+        width: 100%; 
+      }
+
+      /* 
+        Ensures pixel art remains crisp instead of blurred when scaled.
+        This is key for retro / low-res art.
+      */
+      canvas { 
+        image-rendering: pixelated;
+        display: block; 
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Game will mount/inject its canvas into this container -->
+    <div id="app"></div>
+
+    <!-- Entry JavaScript module that boots the game (likely creates the canvas + engine) -->
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
