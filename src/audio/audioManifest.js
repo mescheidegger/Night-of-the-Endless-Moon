@@ -52,6 +52,10 @@ export const AUDIO_MANIFEST = [
     url: 'audio/weapons/toretire/fireblast.ogg'
   },
   {
+    key: 'sfx.weapon.firebomb.fire',
+    url: 'audio/weapons/toretire/firebomb.ogg'
+  },
+  {
     key: 'sfx.weapon.ragnarok.fire',
     url: 'audio/weapons/toretire/ragnarok.ogg'
   },

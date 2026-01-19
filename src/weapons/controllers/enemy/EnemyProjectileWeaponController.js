@@ -142,6 +142,7 @@ export class EnemyProjectileWeaponController {
 
     const fired = this._fireSalvo(angle, cfg);
     if (fired) {
+      this.scene?.events?.emit('weapon:fired', { weaponKey: this.weaponKey });
       this._nextFireAt = nowMs + this.cooldownMs;
     }
 

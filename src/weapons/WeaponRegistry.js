@@ -2673,7 +2673,7 @@ export const WeaponRegistry = {
         texture: 'fireblastexplosion',
         atlas: 'weaponanimations_atlas',
         atlasFrame: 'fireblastexplosion.png',
-        animKey: 'firebomb-explode'
+        animKey: 'fireblastexplosion-explode'
       }
     },
 
@@ -2746,12 +2746,19 @@ export const WeaponRegistry = {
     }
   },
 
-  firebomb: {
-    key: 'firebomb',
+  fireblastexplosion: {
+    key: 'fireblastexplosion',
     type: 'cluster',
 
     audio: {
-      fire: null,
+      fire: {
+        key: 'sfx.weapon.firebomb.fire',
+        volume: 0.9,
+        maxSimultaneous: 4,
+        minIntervalMs: 0,
+        bus: 'sfx',
+        pitchJitter: 0.05
+      },
       hit: {
         key: 'sfx.weapon.common.hit',
         volume: 0.3,
@@ -2763,7 +2770,7 @@ export const WeaponRegistry = {
     },
 
     cadence: {
-      delayMs: 3200,
+      delayMs: 2800,
       salvo: 1,
       warmupMs: 0
     },
@@ -2788,7 +2795,7 @@ export const WeaponRegistry = {
       atlasFrame: 'fireblastexplosion.png',
       frameWidth: 64,
       frameHeight: 64,
-      animKey: 'firebomb-explode'
+      animKey: 'fireblastexplosion-explode'
     },
 
     damage: {
@@ -5477,7 +5484,14 @@ export const WeaponRegistry = {
     type: 'cross',
 
     audio: {
-      fire: null,
+      fire: {
+        key: 'sfx.weapon.sparkcross.fire',
+        volume: 0.9,
+        maxSimultaneous: 4,
+        minIntervalMs: 0,
+        bus: 'sfx',
+        pitchJitter: 0.05
+      },
       hit: {
         key: 'sfx.weapon.common.hit',
         volume: 0.3,
