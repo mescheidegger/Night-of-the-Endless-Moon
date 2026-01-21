@@ -108,10 +108,23 @@ export class MenuScene extends Phaser.Scene {
         return;
       }
       this._openModal('How to Play', [
-        '• Move: WASD or Arrow Keys',
-        '• Your weapon auto-fires at the nearest enemy',
-        '• Collect blue shards to gain XP',
-        '• Survive as long as you can'
+        'Controls:',
+        '• Desktop: Move with WASD or Arrow Keys',
+        '• Mobile: Use the on-screen joystick',
+        '• Pause: Press Esc or tap the button in the top-right corner',
+        '',
+        'Combat:',
+        '• Your weapon fires automatically at nearby enemies',
+        '• Positioning and movement are your primary defense',
+        '',
+        'Progression:',
+        '• Collect blue and green shards to gain XP',
+        '• Level up to choose new weapons or powerful passives',
+        '• Build synergies to survive the rising difficulty',
+        '',
+        'Objective:',
+        '• Survive the night',
+        '• Defeat the boss that awaits at dawn'
       ]);
     }, 6);
 
@@ -128,8 +141,13 @@ export class MenuScene extends Phaser.Scene {
       }
       this._openModal('About', [
         'When the blood moon rises, the dead answer its call.',
-        'Survive relentless hordes across an endless battlefield of graves and ruin.',
-        'Grow stronger with every shard you collect — and see how long you can hold back the night.'
+        'Night of the Blood Moon is a dark-fantasy survival game set on a cursed battlefield of graves and ruin.',
+        'Fight through relentless hordes, collect blue shards to grow stronger, and forge a build powerful enough to last until dawn.',
+        'If you survive the night, a final boss awaits.',
+        '',
+        'Assets & Credits:',
+        'Art and audio are sourced from itch.io, OpenGameArt, Mixkit, and Pixabay.',
+        'All assets are CC0 or free-to-use.'
       ]);
     }, 6);
 
@@ -218,7 +236,7 @@ export class MenuScene extends Phaser.Scene {
     const D_BACK = 20, D_PANEL = 21, D_TEXT = 22, D_BTN = 23;
 
     const w = Math.min(600, this.scale.width - 80);
-    const h = Math.min(360, this.scale.height - 120);
+    const h = Math.min(480, this.scale.height - 120);
     const x = this.scale.width / 2;
     const y = this.scale.height / 2;
 
