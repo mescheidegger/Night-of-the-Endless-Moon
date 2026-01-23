@@ -97,6 +97,7 @@ export const ENEMY_BEHAVIORS = {
    * Legion formation member: steers toward its assigned slot on a moving ring.
    */
   legionMember: (enemy, player, scene, dt = 0) => {
+    // Defensive guards: fall back to seek behavior when context is missing.
     if (!enemy || !player || !scene) return;
 
     const formations = scene.legionFormations;
@@ -104,6 +105,7 @@ export const ENEMY_BEHAVIORS = {
       return ENEMY_BEHAVIORS.seekPlayer(enemy, player, scene, dt);
     }
 
+    // Resolve the shared formation state; missing state means the ring collapsed.
     const formation = formations.get(enemy._formationId);
     if (!formation) {
       return ENEMY_BEHAVIORS.seekPlayer(enemy, player, scene, dt);
@@ -116,6 +118,7 @@ export const ENEMY_BEHAVIORS = {
     if (formation.lastUpdatedAt !== now) {
       formation.lastUpdatedAt = now;
 
+      // Move the entire ring toward the player at a shared speed.
       const dxF = player.x - formation.cx;
       const dyF = player.y - formation.cy;
       const distF = Math.hypot(dxF, dyF) || 1;
@@ -126,15 +129,18 @@ export const ENEMY_BEHAVIORS = {
         formation.cy += (dyF / distF) * move * dtSeconds;
       }
 
+      // Apply continuous angular rotation to every member's slot.
       const angSpeed = formation.angularSpeed ?? 0;
       formation.angularOffset = (formation.angularOffset ?? 0) + angSpeed * dtSeconds;
 
+      // Optionally shrink the ring radius over time (tightening the formation).
       const shrink = formation.shrinkPerSecond ?? 0;
       if (shrink > 0) {
         formation.radius = Math.max(40, formation.radius - shrink * dtSeconds);
       }
     }
 
+    // Cache formation center and compute a reasonable speed to move the enemy.
     const cx = formation.cx;
     const cy = formation.cy;
     const speed = Number.isFinite(enemy.speed)
@@ -143,10 +149,12 @@ export const ENEMY_BEHAVIORS = {
         ? formation.moveSpeed
         : 60;
 
+    // Slot angle + slot radius define the ideal target location for this member.
     const baseAngle = enemy._formationAngle ?? 0;
     const slotAngle = baseAngle + (formation.angularOffset ?? 0);
     const slotRadius = enemy._formationRadius ?? formation.radius;
 
+    // Player vector is used as a gentle "move inward" component.
     const playerDx = player.x - enemy.x;
     const playerDy = player.y - enemy.y;
     const playerDist = Math.hypot(playerDx, playerDy);
@@ -155,6 +163,7 @@ export const ENEMY_BEHAVIORS = {
     const maxSeparationChecks = Number.isFinite(formation.maxSeparationChecks) ? formation.maxSeparationChecks : 14;
     const radialGain = Number.isFinite(formation.radialGain) ? formation.radialGain : 0.03;
 
+    // --- Separation: repel nearby legion members to avoid stacking ---
     let sepX = 0;
     let sepY = 0;
     let checked = 0;
@@ -175,14 +184,17 @@ export const ENEMY_BEHAVIORS = {
       }
     }
 
+    // --- Build the steering direction as a blend of influences ---
     let dirX = 0;
     let dirY = 0;
 
+    // Slight pull toward the player keeps the ring moving as a group.
     if (playerDist > 0.001) {
       dirX += playerDx / playerDist;
       dirY += playerDy / playerDist;
     }
 
+    // Radial correction keeps the member near its assigned ring radius.
     const relX = enemy.x - cx;
     const relY = enemy.y - cy;
     const curRadius = Math.hypot(relX, relY);
@@ -198,6 +210,7 @@ export const ENEMY_BEHAVIORS = {
     dirX += radialUnitX * radialContribution;
     dirY += radialUnitY * radialContribution;
 
+    // Tangential drift encourages rotation in sync with the formation.
     const angSpeed = formation.angularSpeed ?? 0;
     if (Math.abs(angSpeed) > 0.0001) {
       const sign = Math.sign(angSpeed);
@@ -208,6 +221,7 @@ export const ENEMY_BEHAVIORS = {
       dirY += tangentY * tangentialGain;
     }
 
+    // Separation force is clamped to avoid overpowering the main steering.
     const sepMag = Math.hypot(sepX, sepY);
     if (sepMag > 0.001) {
       const maxSeparation = 0.5;
@@ -216,6 +230,7 @@ export const ENEMY_BEHAVIORS = {
       dirY += (sepY / sepMag) * separationContribution;
     }
 
+    // Normalize and scale to final speed for smooth motion.
     const dirMag = Math.hypot(dirX, dirY);
     if (dirMag > 0.001) {
       const scale = speed / dirMag;
