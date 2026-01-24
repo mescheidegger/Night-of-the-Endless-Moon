@@ -86,6 +86,22 @@ export const PassiveRegistry = {
       }
     }
   },
+  shield: {
+    key: 'shield',
+    maxStacks: 3,
+    effects: {
+      iframeMsBonus: 200
+    },
+    ui: {
+      name: 'Aegis Shield',
+      rarity: 'rare',
+      description: 'Boosts invulnerability frames after taking damage.',
+      icon: {
+        atlas: 'passives_atlas',
+        frame: 'shield.png'
+      }
+    }
+  },
   reapersReach: {
     key: 'reapersReach',
     maxStacks: 3,

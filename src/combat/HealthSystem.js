@@ -49,6 +49,15 @@ export class HealthSystem {
   }
 
   /**
+   * Update the invincibility window (ms) used after taking damage.
+   */
+  setIFrameDurationMs(ms = this.iFrameDuration) {
+    const next = Number(ms);
+    if (!Number.isFinite(next)) return;
+    this.iFrameDuration = Math.max(0, next);
+  }
+
+  /**
    * Restores the entity to full health and clears invincibility timers.
    * Used when the scene restarts or if the player obtains a full heal power-up.
    */

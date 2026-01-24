@@ -153,7 +153,7 @@ const HEROES = {
       starterlabel: 'Sword'
     },
     passives: {
-      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach'],
+      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach', 'shield'],
       //starter: ['might']
     },
     ui: {
@@ -207,7 +207,7 @@ const HEROES = {
       speed: 105,
       maxVelocity: 160,
       maxHealth: 150,
-      iframeMs: 800,
+      iframeMs: 200,
       drag: 0,
       damping: false
     },
@@ -245,7 +245,7 @@ const HEROES = {
       starterlabel: 'Nordic Cleaver'
     },
     passives: {
-      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach'],
+      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach', 'shield'],
       starter: []
     },
     ui: {
@@ -299,7 +299,7 @@ const HEROES = {
       speed: 110,
       maxVelocity: 160,
       maxHealth: 125,
-      iframeMs: 800,
+      iframeMs: 150,
       drag: 0,
       damping: false
     },
@@ -337,7 +337,7 @@ const HEROES = {
       starterlabel: 'Hammer Swing'
     },
     passives: {
-      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach'],
+      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach', 'shield'],
       starter: []
     },
     ui: {
@@ -391,7 +391,7 @@ const HEROES = {
       speed: 105,
       maxVelocity: 160,
       maxHealth: 150,
-      iframeMs: 800,
+      iframeMs: 200,
       drag: 0,
       damping: false
     },
@@ -429,7 +429,7 @@ const HEROES = {
       starterlabel: 'Crimson Slash'
     },
     passives: {
-      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach'],
+      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach', 'shield'],
       starter: []
     },
     ui: {
@@ -483,7 +483,7 @@ const HEROES = {
       speed: 115,
       maxVelocity: 165,
       maxHealth: 100,
-      iframeMs: 800,
+      iframeMs: 100,
       drag: 0,
       damping: false
     },
@@ -521,7 +521,7 @@ const HEROES = {
       starterlabel: 'Spear'
     },
     passives: {
-      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach'],
+      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach', 'shield'],
       starter: []
     },
     ui: {
@@ -570,7 +570,7 @@ const HEROES = {
       speed: 115,
       maxVelocity: 165,
       maxHealth: 100,
-      iframeMs: 800,
+      iframeMs: 100,
       drag: 0,
       damping: false
     },
@@ -608,7 +608,7 @@ const HEROES = {
       starterlabel: 'Arcane Swipe'
     },
     passives: {
-      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach'],
+      allowed: ['might', 'vampiresKiss', 'multiShot', 'bloodrush', 'bloodwindtreads', 'reapersReach', 'shield'],
       starter: []
     },
     ui: {
@@ -661,7 +661,7 @@ const HEROES = {
       speed: 115,
       maxVelocity: 160,
       maxHealth: 100,
-      iframeMs: 800,
+      iframeMs: 100,
       drag: 0,
       damping: false
     },

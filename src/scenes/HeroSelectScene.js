@@ -423,7 +423,7 @@ export class HeroSelectScene extends Phaser.Scene {
     if (stats.speed !== undefined) statLines.push(`Speed: ${stats.speed}`);
     if (stats.maxHealth !== undefined) statLines.push(`Health: ${stats.maxHealth}`);
     if (stats.maxVelocity !== undefined) statLines.push(`Max Velocity: ${stats.maxVelocity}`);
-    if (stats.iframeMs !== undefined) statLines.push(`I-Frames: ${stats.iframeMs}ms`);
+    if (stats.iframeMs !== undefined) statLines.push(`Block Speed: ${stats.iframeMs}ms`);
     const starter = hero.weapons?.starter ?? [];
     const starterLabel = hero.weapons?.starterlabel || (starter.length ? starter.join(', ') : '—');
     statLines.push(`Starter: ${starterLabel}`);

@@ -23,6 +23,7 @@ import { LevelUpFlow } from '../progression/LevelUpFlow.js';
 import { PickupController } from '../drops/controllers/PickupController.js';
 import { EnemyBehaviorSystem } from '../combat/EnemyBehaviorSystem.js';
 import { EnemyProjectileSystem } from '../combat/EnemyProjectileSystem.js';
+import { PlayerDerivedStatsApplier } from '../combat/PlayerDerivedStatsApplier.js';
 import { HUDManager } from '../ui/HUDManager.js';
 import { resolveMobConfig } from '../mob/MobRegistry.js';
 import { PassiveManager } from '../passives/PassiveManager.js';
@@ -257,6 +258,13 @@ export class GameScene extends Phaser.Scene {
       : [];
     this.passiveManager.setWhitelist(passiveAllowed);
     this.passiveManager.setLoadout(passiveStarter);
+    this.derivedStats = new PlayerDerivedStatsApplier(this, {
+      events: this.events,
+      hero: this.hero,
+      heroEntry: this.heroEntry,
+      passiveManager: this.passiveManager
+    });
+    this.derivedStats.applyNow();
 
     this.enemyGroup = enemyGroup;
   }
@@ -373,6 +381,8 @@ export class GameScene extends Phaser.Scene {
       this.events.off('enemy:spawned', this._onEnemySpawned);
       this.events.off('enemy:released', this._onEnemyReleased);
       this.events.off('enemy:died', this._onEnemyDied);
+      this.derivedStats?.destroy?.();
+      this.derivedStats = null;
       this.levelFlow?.destroy?.();
       this.pickups?.destroy?.();
       this.enemyAI?.destroy?.();

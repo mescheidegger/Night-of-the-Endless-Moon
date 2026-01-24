@@ -188,13 +188,11 @@ export class PassiveManager {
   }
 
   /**
-   * Provide XP magnet radius/speed multipliers for pickup systems.
+   * Provide additive iframe duration bonuses for HealthSystem.
    */
-  getXpMagnetMultipliers() {
+  getIFrameDurationBonus() {
     const agg = this.aggregate ?? {};
-    const radiusMult = 1 + (agg.xpMagnetRadiusPct ?? 0);
-    const speedMult  = 1 + (agg.xpMagnetSpeedPct ?? 0);
-    return { radiusMult, speedMult };
+    return agg.iframeMsBonus ?? 0;
   }
 
   /**
