@@ -6,6 +6,7 @@ import { PauseButton } from './PauseButton.js';
 import { DebugOverlay } from './DebugOverlay.js';
 import { PlayerHUD } from './PlayerHUD.js';
 import { DEV_RUN } from '../config/gameConfig.js';
+import { RunStatsTracker } from '../run/RunStatsTracker.js';
 
 /** Provide shouldUseTouchUI so callers can reuse shared logic safely. */
 export function shouldUseTouchUI() {
@@ -42,13 +43,9 @@ export class HUDManager {
     this.startTime = startTime;
 
     // -----------------------------
-    // Run stats tracked by HUDManager
+    // Run stats tracker (authoritative snapshot for HUD + menus)
     // -----------------------------
-    this.totalKills = 0;
-    this._onEnemyDied = () => {
-      this.totalKills += 1;
-    };
-    this.events?.on?.('enemy:died', this._onEnemyDied);
+    this.runStats = new RunStatsTracker(scene, { events: this.events, startTime });
 
     // -----------------------------
     // Bars
@@ -196,6 +193,7 @@ export class HUDManager {
    */
   setStartTime(startTime) {
     this.startTime = startTime;
+    this.runStats?.setStartTime?.(startTime);
   }
 
   /** Compute run elapsed ms using the scene helper if available. */
@@ -218,14 +216,16 @@ export class HUDManager {
     if (now < (this._nextStatsAt ?? 0)) return;
     this._nextStatsAt = now + 250;
 
-    const elapsedMs = this._getElapsedMs(now);
-
-    const xp = this.scene.playerXP ?? 0;
+    const snapshot = this.runStats?.getSnapshot?.() ?? {
+      timeSurvivedMs: this._getElapsedMs(now),
+      kills: 0,
+      xpEarned: this.scene.playerXP ?? 0
+    };
 
     this.playerHUD?.setStats({
-      elapsedMs,
-      kills: this.totalKills,
-      xp,
+      elapsedMs: snapshot.timeSurvivedMs,
+      kills: snapshot.kills,
+      xp: snapshot.xpEarned,
     });
 
 
@@ -234,13 +234,11 @@ export class HUDManager {
       const enemyGroup = this.scene.enemyPools?.getAllGroup?.();
       const enemies = enemyGroup?.countActive?.(true) ?? 0;
       const drops = this.scene.dropManager?.getGroup?.()?.countActive?.(true) ?? 0;
-      const xp = this.scene.playerXP ?? 0;
-
       this.debugOverlay.setStats({
-        elapsedSeconds: elapsedMs / 1000,
+        elapsedSeconds: (snapshot.timeSurvivedMs ?? 0) / 1000,
         enemies,
         drops,
-        xp,
+        xp: snapshot.xpEarned ?? 0,
       });
     }
   }
@@ -264,8 +262,8 @@ export class HUDManager {
     this.scene.input?.keyboard?.off('keydown-F3', this._onToggleDebug);
     this.scene.input?.keyboard?.off('keydown-BACKTICK', this._onToggleDebug);
 
-    this.events?.off?.('enemy:died', this._onEnemyDied);
-    this._onEnemyDied = null;
+    this.runStats?.destroy?.();
+    this.runStats = null;
 
     this.loadoutBar?.destroy();
     this.passiveBar?.destroy();
@@ -285,7 +283,6 @@ export class HUDManager {
     this.joystick = null;
     this.pauseButton = null;
 
-    this.totalKills = 0;
     this._nextStatsAt = 0;
   }
 }

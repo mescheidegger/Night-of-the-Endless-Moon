@@ -19,7 +19,7 @@ export class EndRunMenu {
   /**
    * @param {Phaser.Scene} scene
    * @param {{
-   *   stats?: { timeSurvived?: number, kills?: number },
+   *   stats?: { timeSurvived?: number, kills?: number, xpEarned?: number },
    *   title?: string,
    *   subtitle?: string,
    *   primaryLabel?: string,
@@ -179,6 +179,10 @@ export class EndRunMenu {
 
     if (typeof this.stats.kills === 'number') {
       lines.push(`Enemies Defeated: ${this.stats.kills}`);
+    }
+
+    if (typeof this.stats.xpEarned === 'number') {
+      lines.push(`XP Earned: ${this.stats.xpEarned}`);
     }
 
     return lines;

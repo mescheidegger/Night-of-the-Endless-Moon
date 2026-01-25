@@ -333,6 +333,15 @@ export class GameScene extends Phaser.Scene {
 
   /** Handle _collectRunStats so this system stays coordinated. */
   _collectRunStats() {
+    const snapshot = this.hud?.runStats?.getSnapshot?.();
+    if (snapshot) {
+      return {
+        timeSurvived: snapshot.timeSurvivedSeconds,
+        kills: snapshot.kills,
+        xpEarned: snapshot.xpEarned
+      };
+    }
+
     const elapsedMs = this.getRunElapsedMs();
     return { timeSurvived: elapsedMs / 1000 };
   }
