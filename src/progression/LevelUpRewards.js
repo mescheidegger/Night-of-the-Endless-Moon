@@ -1,14 +1,13 @@
 import { WeaponRegistry } from '../weapons/WeaponRegistry.js';
 import { PassiveRegistry, isValidPassive } from '../passives/PassiveRegistry.js';
-import { CONFIG } from '../config/gameConfig.js';
+import { CONFIG, LEVEL_UP } from '../config/gameConfig.js';
 import * as WeaponProgression from '../weapons/WeaponProgression.js';
 
 const PASSIVE_SEED_OFFSET = 0x9e3779b9;
 const WEAPON_RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
 /**
- * Collect all weapon keys in the hero's progression table that unlock at or before
- * the current level.
+ * Collect all keys in a progression table that unlock at or before `level`.
  *
  * progression example:
  * {
@@ -17,48 +16,36 @@ const WEAPON_RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
  * }
  */
 function collectProgressionKeys(progression, level) {
-  if (!progression || typeof progression !== 'object') {
-    return [];
-  }
+  if (!progression || typeof progression !== 'object') return [];
 
   const keys = [];
-
-  for (const [lvlKey, weaponKeys] of Object.entries(progression)) {
-    // Convert level key to integer (keys are stored as strings)
+  for (const [lvlKey, list] of Object.entries(progression)) {
     const unlockLevel = Number.parseInt(lvlKey, 10);
-    // Ignore invalid or future unlocks
     if (!Number.isFinite(unlockLevel) || unlockLevel > level) continue;
-    // Only accept arrays at each progression step
-    if (!Array.isArray(weaponKeys)) continue;
-    // Add the eligible weapon keys
-    keys.push(...weaponKeys);
+    if (!Array.isArray(list)) continue;
+    keys.push(...list);
   }
-
   return keys;
 }
 
 /**
  * Creates a deterministic pseudo-random generator from a given numeric seed.
- * This ensures that level-up choices are stable per run (not random every time).
+ * This ensures that level-up choices are stable per run.
  */
 function makeSeededRandom(seed) {
-  // Ensure seed is a uint32
   let state = seed >>> 0;
 
   return () => {
-    // Xorshift-like PRNG
     state += 0x6d2b79f5;
     let t = state;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    // Convert to [0, 1) float
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
 
 /**
- * Shuffle an array *deterministically* using a seeded RNG so that the
- * same seed yields the same shuffled ordering.
+ * Shuffle an array deterministically using a seeded RNG.
  */
 function deterministicShuffle(array, seed) {
   const result = array.slice();
@@ -66,41 +53,37 @@ function deterministicShuffle(array, seed) {
 
   for (let i = result.length - 1; i > 0; i -= 1) {
     const j = Math.floor(rnd() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]]; // Swap using destructuring
+    [result[i], result[j]] = [result[j], result[i]];
   }
 
   return result;
 }
 
 /**
- * Get a human-readable name for a weapon from the registry UI data.
- * Falls back to the weapon key if no UI name is set.
+ * Get a human-readable name for a registry entry.
  */
 function toDisplayName(entry, key) {
   const uiName = entry?.ui?.name;
-  if (typeof uiName === 'string' && uiName.trim().length > 0) {
-    return uiName;
-  }
-  return key;
+  return (typeof uiName === 'string' && uiName.trim().length > 0) ? uiName : key;
 }
 
 /**
  * Filter + dedupe weapon candidates:
- * - Must be in the allowed list
- * - Must exist in WeaponRegistry
- * - Must NOT already be owned
+ * - Must be allowed
+ * - Must exist in registry
+ * - Must not already be owned
  */
 function normalizeWeaponCandidates(candidates, allowedSet, ownedSet) {
   const unique = new Set();
   const filtered = [];
 
   candidates.forEach((key) => {
-    if (unique.has(key)) return; // skip duplicates
+    if (unique.has(key)) return;
     unique.add(key);
 
-    if (!allowedSet.has(key)) return; // hero isn't allowed to use it
-    if (!WeaponRegistry[key]) return; // missing registry entry
-    if (ownedSet.has(key)) return; // player already has it
+    if (!allowedSet.has(key)) return;
+    if (!WeaponRegistry[key]) return;
+    if (ownedSet.has(key)) return;
 
     filtered.push(key);
   });
@@ -109,7 +92,7 @@ function normalizeWeaponCandidates(candidates, allowedSet, ownedSet) {
 }
 
 /**
- * Filter and dedupe passive candidates while respecting stack caps and allowlists.
+ * Filter + dedupe passive candidates while respecting stack caps and allowlists.
  */
 function normalizePassiveCandidates(candidates, allowedSet, ownedCounts) {
   const unique = new Set();
@@ -141,6 +124,9 @@ function buildOwnedPassiveCounts(currentPassives, resolver) {
 
   keys.forEach((key) => {
     if (!isValidPassive(key)) return;
+
+    // If a resolver exists (e.g., PassiveManager stack map),
+    // prefer it on first sighting for correctness.
     if (!counts.has(key) && getCount) {
       const resolved = getCount(key);
       if (Number.isFinite(resolved) && resolved > 0) {
@@ -148,6 +134,7 @@ function buildOwnedPassiveCounts(currentPassives, resolver) {
         return;
       }
     }
+
     counts.set(key, (counts.get(key) ?? 0) + 1);
   });
 
@@ -155,7 +142,7 @@ function buildOwnedPassiveCounts(currentPassives, resolver) {
 }
 
 /**
- * Build a deterministic seed from run start time and level for stable rolls.
+ * Build a deterministic seed from run start time and level.
  */
 function buildSeed(scene, level, offset = 0) {
   const base = Number(scene?._runStartedAt ?? 0);
@@ -164,14 +151,33 @@ function buildSeed(scene, level, offset = 0) {
 }
 
 /**
- * Given a list of *new* weapon keys, gate them by rarity so that:
- * - Only the lowest rarity with any candidates is eligible.
- * - Higher-rarity weapons will not appear as "new" until lower tiers are owned.
+ * Passive offering gate: controls whether passives are allowed to appear
+ * on a given level based on CONFIG.LEVEL_UP tuning:
+ *  - passiveInterval: only offer every N levels (<=1 means every level)
+ *  - passiveStartLevel: begin gating at/after this level (before it, allow)
+ *  - passiveMilestones: always allow on these levels
+ */
+function shouldOfferPassives(level) {
+  const interval = Number(LEVEL_UP?.passiveInterval ?? 1);
+  const startLevel = Number(LEVEL_UP?.passiveStartLevel ?? 1);
+  const milestones = LEVEL_UP?.passiveMilestones;
+
+  if (!Number.isFinite(level) || level <= 0) return true;
+  if (!Number.isFinite(interval) || interval <= 1) return true;
+
+  if (Number.isFinite(startLevel) && level < startLevel) return true;
+
+  if (Array.isArray(milestones) && milestones.includes(level)) return true;
+
+  return (level % interval) === 0;
+}
+
+/**
+ * Given a list of new weapon keys, gate by rarity so only the lowest rarity tier
+ * with any candidates is eligible.
  */
 function gateNewWeaponsByRarity(candidates) {
-  if (!Array.isArray(candidates) || candidates.length === 0) {
-    return [];
-  }
+  if (!Array.isArray(candidates) || candidates.length === 0) return [];
 
   const buckets = new Map();
 
@@ -179,22 +185,15 @@ function gateNewWeaponsByRarity(candidates) {
     const entry = WeaponRegistry[key];
     const rarityRaw = entry?.ui?.rarity ?? 'common';
     const rarity = typeof rarityRaw === 'string' ? rarityRaw.toLowerCase() : 'common';
-
-    if (!buckets.has(rarity)) {
-      buckets.set(rarity, []);
-    }
+    if (!buckets.has(rarity)) buckets.set(rarity, []);
     buckets.get(rarity).push(key);
   });
 
-  // Find the first rarity tier that has any candidates.
   for (const rarity of WEAPON_RARITY_ORDER) {
     const bucket = buckets.get(rarity);
-    if (bucket && bucket.length > 0) {
-      return bucket;
-    }
+    if (bucket && bucket.length > 0) return bucket;
   }
 
-  // Fallback: return the first non-empty bucket if rarities are non-standard.
   const firstEntry = buckets.entries().next();
   if (!firstEntry.done) {
     const [, bucket] = firstEntry.value;
@@ -215,11 +214,9 @@ function getWeaponChoicesInternal({
   maxChoices = 3,
   getWeaponLevel
 }) {
-  // Determine which weapons the hero is allowed to ever equip
   const allowedKeys = Array.isArray(heroEntry?.weapons?.allowed)
     ? heroEntry.weapons.allowed
-    : // fallback: all registered weapons
-      Object.keys(WeaponRegistry);
+    : Object.keys(WeaponRegistry);
 
   const allowedSet = new Set(allowedKeys.filter((key) => WeaponRegistry[key]));
   const ownedSet = new Set(currentLoadout);
@@ -232,24 +229,18 @@ function getWeaponChoicesInternal({
 
   const maxLevel = CONFIG.WEAPONS.MAX_LEVEL ?? 5;
 
-  // Detect if the hero has an explicit progression table
   const hasProgressionTable =
     heroEntry?.progression &&
     typeof heroEntry.progression === 'object' &&
     Object.keys(heroEntry.progression).length > 0;
 
-  // Get all weapons unlocked up to this level
   let candidates = collectProgressionKeys(heroEntry?.progression, level);
 
-  // Only fall back to all allowed weapons if there is NO progression table at all
   if (!candidates.length && !hasProgressionTable) {
     candidates = allowedKeys.slice();
   }
 
-  // Filter out missing / disallowed / already owned weapons
   const newFiltered = normalizeWeaponCandidates(candidates, allowedSet, ownedSet);
-
-  // RARITY GATE: only the lowest-rarity unowned weapons are eligible as "new"
   const gatedNew = gateNewWeaponsByRarity(newFiltered);
 
   const upgradeCandidates = [];
@@ -266,76 +257,40 @@ function getWeaponChoicesInternal({
 
   const picks = [];
   const want = Math.max(0, maxChoices);
-  const hasManyWeapons = currentLoadout.length >= 2;
 
-  // IMPORTANT BEHAVIOR:
-  // - Always prefer NEW weapons over upgrades when assembling weapon choices.
-  if (hasManyWeapons) {
-    // Fill with NEW weapons first (respecting rarity gate), then upgrades.
-    shuffledNew.slice(0, want).forEach((key) => {
+  // Prefer NEW weapons first, then upgrades as filler.
+  shuffledNew.slice(0, want).forEach((key) => {
+    const entry = WeaponRegistry[key];
+    picks.push({
+      type: 'weapon',
+      subtype: 'new',
+      key,
+      name: toDisplayName(entry, key),
+      rarity: entry?.ui?.rarity ?? 'common',
+      description: entry?.ui?.description ?? '',
+      ui: entry?.ui ?? null
+    });
+  });
+
+  if (picks.length < want) {
+    const remaining = want - picks.length;
+    shuffledUpgrade.slice(0, remaining).forEach((key) => {
       const entry = WeaponRegistry[key];
+      const curLevel = ownedLevels.get(key) ?? CONFIG.WEAPONS.DEFAULT_LEVEL;
+      const nextLevel = curLevel + 1;
+      const description = WeaponProgression.describeLevelUpgrade(entry, curLevel, nextLevel);
+
       picks.push({
         type: 'weapon',
-        subtype: 'new',
+        subtype: 'upgrade',
         key,
+        nextLevel,
         name: toDisplayName(entry, key),
         rarity: entry?.ui?.rarity ?? 'common',
-        description: entry?.ui?.description ?? '',
+        description,
         ui: entry?.ui ?? null
       });
     });
-
-    if (picks.length < want) {
-      const remaining = want - picks.length;
-      shuffledUpgrade.slice(0, remaining).forEach((key) => {
-        const entry = WeaponRegistry[key];
-        const nextLevel = (ownedLevels.get(key) ?? CONFIG.WEAPONS.DEFAULT_LEVEL) + 1;
-        const description = WeaponProgression.describeLevelUpgrade(entry, nextLevel - 1, nextLevel);
-        picks.push({
-          type: 'weapon',
-          subtype: 'upgrade',
-          key,
-          nextLevel,
-          name: toDisplayName(entry, key),
-          rarity: entry?.ui?.rarity ?? 'common',
-          description,
-          ui: entry?.ui ?? null
-        });
-      });
-    }
-  } else {
-    // Early game: still prefer new weapons, then upgrades as filler.
-    shuffledNew.slice(0, want).forEach((key) => {
-      const entry = WeaponRegistry[key];
-      picks.push({
-        type: 'weapon',
-        subtype: 'new',
-        key,
-        name: toDisplayName(entry, key),
-        rarity: entry?.ui?.rarity ?? 'common',
-        description: entry?.ui?.description ?? '',
-        ui: entry?.ui ?? null
-      });
-    });
-
-    if (picks.length < want) {
-      const remaining = want - picks.length;
-      shuffledUpgrade.slice(0, remaining).forEach((key) => {
-        const entry = WeaponRegistry[key];
-        const nextLevel = (ownedLevels.get(key) ?? CONFIG.WEAPONS.DEFAULT_LEVEL) + 1;
-        const description = WeaponProgression.describeLevelUpgrade(entry, nextLevel - 1, nextLevel);
-        picks.push({
-          type: 'weapon',
-          subtype: 'upgrade',
-          key,
-          nextLevel,
-          name: toDisplayName(entry, key),
-          rarity: entry?.ui?.rarity ?? 'common',
-          description,
-          ui: entry?.ui ?? null
-        });
-      });
-    }
   }
 
   return picks;
@@ -343,6 +298,7 @@ function getWeaponChoicesInternal({
 
 /**
  * Build passive reward choices based on hero allowlists and current stacks.
+ * Honors the passive cadence gate (interval/start/milestones) via CONFIG.LEVEL_UP.
  */
 export function getPassiveChoices({
   scene,
@@ -352,6 +308,11 @@ export function getPassiveChoices({
   getStackCount,
   maxChoices = 3
 }) {
+  // NEW: passive cadence gate
+  if (!shouldOfferPassives(level)) {
+    return [];
+  }
+
   const allowedKeys = Array.isArray(heroEntry?.passives?.allowed)
     ? heroEntry.passives.allowed
     : Object.keys(PassiveRegistry);
@@ -365,7 +326,6 @@ export function getPassiveChoices({
     return [];
   }
 
-  // Detect if hero has a passive progression table
   const hasPassiveProgressionTable =
     heroEntry?.passives?.progression &&
     typeof heroEntry.passives.progression === 'object' &&
@@ -373,15 +333,12 @@ export function getPassiveChoices({
 
   let candidates = collectProgressionKeys(heroEntry?.passives?.progression, level);
 
-  // Only fall back to allowedKeys if there is NO passive progression table
   if (!candidates.length && !hasPassiveProgressionTable) {
     candidates = allowedKeys.slice();
   }
 
   const filtered = normalizePassiveCandidates(candidates, allowedSet, ownedCounts);
-  if (!filtered.length) {
-    return [];
-  }
+  if (!filtered.length) return [];
 
   const seed = buildSeed(scene, level, PASSIVE_SEED_OFFSET);
   const shuffled = deterministicShuffle(filtered, seed);
@@ -424,52 +381,43 @@ export function getLevelUpChoices({
     getWeaponLevel: (key) => scene.weaponManager?.getWeaponLevel?.(key)
   });
 
-  const passiveChoices = getPassiveChoices({
-    scene,
-    heroEntry,
-    level,
-    currentPassives,
-    getStackCount: getPassiveStackCount,
-    maxChoices: total
-  });
+  // NEW: passive choices already include gating, but we also short-circuit here
+  // to avoid extra work on levels where passives aren't allowed.
+  const passiveChoices = shouldOfferPassives(level)
+    ? getPassiveChoices({
+        scene,
+        heroEntry,
+        level,
+        currentPassives,
+        getStackCount: getPassiveStackCount,
+        maxChoices: total
+      })
+    : [];
 
   const upgrades = weaponChoices.filter((c) => c.subtype === 'upgrade');
   const newWeapons = weaponChoices.filter((c) => c.subtype !== 'upgrade');
   const passives = passiveChoices.slice();
 
-  const picks = [];
-
   const weaponsAvailable = () => (upgrades.length + newWeapons.length) > 0;
   const passivesAvailable = () => passives.length > 0;
 
-  // NEW PRIORITY: prefer NEW weapons first, then upgrades.
   const takeWeapon = () => {
     if (newWeapons.length) return newWeapons.shift();
     if (upgrades.length) return upgrades.shift();
     return null;
   };
 
-  const takePassive = () => {
-    if (!passives.length) return null;
-    return passives.shift();
-  };
+  const takePassive = () => (passives.length ? passives.shift() : null);
 
-  if (!weaponsAvailable() && !passivesAvailable()) {
-    return [];
-  }
+  if (!weaponsAvailable() && !passivesAvailable()) return [];
 
-  // If only one category is available, just use that.
-  if (!weaponsAvailable()) {
-    return passives.slice(0, total);
-  }
+  if (!weaponsAvailable()) return passives.slice(0, total);
 
   if (!passivesAvailable()) {
-    // Respect new-then-upgrade ordering even when only weapons exist
     const allWeaponsOrdered = [...newWeapons, ...upgrades];
     return allWeaponsOrdered.slice(0, total);
   }
 
-  // Mixed case: both weapons and passives exist.
   const rng = makeSeededRandom(buildSeed(scene, level, 0x1234abcd));
 
   if (total === 1) {
@@ -487,8 +435,8 @@ export function getLevelUpChoices({
   }
 
   // total >= 2, both categories available:
-  let weaponSlots = 1;   // ensure at least one weapon slot
-  let passiveSlots = 1;  // ensure at least one passive slot
+  let weaponSlots = 1;
+  let passiveSlots = 1;
   let remaining = total - 2;
 
   while (remaining > 0 && (weaponsAvailable() || passivesAvailable())) {
@@ -505,20 +453,19 @@ export function getLevelUpChoices({
     remaining -= 1;
   }
 
-  // Fill weapon slots (NEW weapons first, then upgrades)
+  const picks = [];
+
   for (let i = 0; i < weaponSlots; i += 1) {
     const w = takeWeapon();
     if (!w) break;
     picks.push(w);
   }
 
-  // Fill passive slots
   for (let i = 0; i < passiveSlots; i += 1) {
     const p = takePassive();
     if (!p) break;
     picks.push(p);
   }
 
-  // Guard against overshooting due to exhausted pools
   return picks.slice(0, total);
 }

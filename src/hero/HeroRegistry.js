@@ -136,9 +136,9 @@ const HEROES = {
     progression: {
       3: ['bow'],
       7: ['magicpotion'],
-      11: ['daggerthrow'],
-      15: ['smite'],
-      20: ['holyhammer']
+      12: ['daggerthrow'],
+      18: ['smite'],
+      24: ['holyhammer']
     },
     weapons: {
       allowed: [
@@ -228,9 +228,9 @@ const HEROES = {
     progression: {
       3: ['vikinghammer'],
       7: ['icebow'],
-      11: ['whirlwind'],
-      15: ['lightning'],
-      20: ['ragnarok']
+      12: ['whirlwind'],
+      18: ['lightning'],
+      24: ['ragnarok']
     },
     weapons: {
       allowed: [
@@ -320,9 +320,9 @@ const HEROES = {
     progression: {
       3: ['flamethrower'],
       7: ['bazooka'],
-      11: ['ak47'],
-      15: ['uavstrike'],
-      20: ['deathray']
+      12: ['ak47'],
+      18: ['uavstrike'],
+      24: ['deathray']
     },
     weapons: {
       allowed: [
@@ -412,9 +412,9 @@ const HEROES = {
     progression: {
       3: ['piercingstar'],
       7: ['bow'],
-      11: ['venusrevenge'],
-      15: ['deathskiss'],
-      20: ['clusterpotion']
+      12: ['venusrevenge'],
+      18: ['deathskiss'],
+      24: ['clusterpotion']
     },
     weapons: {
       allowed: [
@@ -591,9 +591,9 @@ const HEROES = {
     progression: {
       3: ['fireblast'],
       7: ['vanquish'],
-      11: ['sparkcross'],
-      15: ['chainlightning'],
-      20: ['lifeeraser']
+      12: ['sparkcross'],
+      18: ['chainlightning'],
+      24: ['lifeeraser']
     },
     weapons: {
       allowed: [

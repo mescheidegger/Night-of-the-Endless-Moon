@@ -1,14 +1,17 @@
 export const LEVELING = {
-  STRATEGY: 'polynomial', // 'table' | 'polynomial' | 'exponential'
+  STRATEGY: 'polynomial',
   CAP: 99,
-  TABLE: [
-    0,   // L0 (unused)
-    0,   // L1
-    10,  // L2
-    25,  // L3
-    45,  // L4
-    70,  // L5
-  ],
-  POLY: { BASE: 6, POWER: 2.0, GROWTH: 4 }, // cumulative XP to reach level N
-  EXP:  { BASE: 5, R: 1.25 },               // cumulative XP to reach level N
+
+  // (TABLE/EXP can stay, but unused while STRATEGY === 'polynomial')
+  TABLE: [0, 0, 10, 25, 45, 70],
+  POLY: { BASE: 6, POWER: 2.0, GROWTH: 4 },
+  EXP:  { BASE: 5, R: 1.25 },
+
+  // --- Tuning knobs ---
+  SCALE: 1.0, // start at 1.0 so L1–12 stays basically identical
+  KINK: {
+    LEVEL: 12,   // start slowing after L12
+    SLOPE: 0.25, // +10% threshold per level after 12
+    MAX: 2.0,    // cap the slowdown so it doesn’t get silly
+  },
 };

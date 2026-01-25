@@ -67,12 +67,30 @@ export const CONFIG = {
   }
 };
 
-// Level-up modal tuning shared across systems that surface upgrade choices.
+// Shared tuning for the level-up modal (choices, restore, and passive cadence).
 export const LEVEL_UP = Object.freeze({
-  // Number of weapon choices to surface alongside the restore option.
+  // How many upgrade options to show (restore is added separately).
   choicesPerLevel: 3,
-  // Amount of healing granted when the player selects the restore option.
-  restoreHealthAmount: 'full'
+
+  // Restore option amount:
+  // - 'full'        => heal to max
+  // - 'percent:25'  => heal 25% of max
+  // - 50            => heal 50 HP
+  restoreHealthAmount: 'full',
+
+  // --- Passive appearance tuning ---
+
+  // Only allow passives to appear every N levels.
+  // 1 = every level (old behavior), 2 = every other level, 3 = every third, etc.
+  passiveInterval: 2,
+
+  // Level at which interval gating begins.
+  // Before this level, passives can always appear.
+  passiveStartLevel: 2,
+
+  // Specific milestone levels where passives are always allowed,
+  // even if they don't match the interval rule.
+  passiveMilestones: [7, 9, 10, 15, 20]
 });
 
 // Dev-only helpers for fast-forwarding runs and booting with predefined loadouts.
