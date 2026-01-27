@@ -68,6 +68,54 @@ export const DropRegistry = {
     // Time-to-live before the drop despawns (ms)
     lifetimeMs: CONFIG.XP.DROP_TTL_MS
   },
+  // A minor health potion (small heal).
+  health_minor: {
+    texture: 'minorhealth',
+    frame: 0,
+
+    scale: CONFIG.XP.SCALE,
+    depth: CONFIG.XP.DEPTH,
+
+    value: { currency: 'health', amount: 10 },
+
+    body: { type: 'circle', r: CONFIG.XP.BODY_RADIUS },
+
+    magnet: {
+      delayMs: CONFIG.XP.MAGNET_DELAY_MS,
+      radius: CONFIG.XP.MAGNET_RADIUS,
+      snapRadius: CONFIG.XP.SNAP_RADIUS,
+      maxSpeed: CONFIG.XP.MAX_SPEED,
+      accel: CONFIG.XP.ACCEL
+    },
+
+    audio: null,
+
+    lifetimeMs: CONFIG.XP.DROP_TTL_MS
+  },
+  // A major health potion (big heal).
+  health_major: {
+    texture: 'majorhealth',
+    frame: 0,
+
+    scale: CONFIG.XP.SCALE,
+    depth: CONFIG.XP.DEPTH,
+
+    value: { currency: 'health', amount: 35 },
+
+    body: { type: 'circle', r: CONFIG.XP.BODY_RADIUS },
+
+    magnet: {
+      delayMs: CONFIG.XP.MAGNET_DELAY_MS,
+      radius: CONFIG.XP.MAGNET_RADIUS,
+      snapRadius: CONFIG.XP.SNAP_RADIUS,
+      maxSpeed: CONFIG.XP.MAX_SPEED,
+      accel: CONFIG.XP.ACCEL
+    },
+
+    audio: null,
+
+    lifetimeMs: CONFIG.XP.DROP_TTL_MS
+  },
   xp_large: {
     // Which texture / frame to render
     texture: 'largexpgem',

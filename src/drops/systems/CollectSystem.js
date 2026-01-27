@@ -7,7 +7,7 @@ export class CollectSystem {
    * @param {{ group: Phaser.Physics.Arcade.Group, player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody }} deps
    */
   constructor(scene, { group, player, passiveManager  } = {}) {
-    this.scene = scene;   // reference to the scene for callbacks (e.g., collectXP)
+    this.scene = scene;   // reference to the scene for callbacks (e.g., collectDrop)
     this.group = group;   // arcade group containing drop instances (XP, items, etc)
     this.player = player; // the hero/player sprite to attract to / collect around
     this.passiveManager = passiveManager ?? scene.passiveManager ?? null;
@@ -101,7 +101,7 @@ export class CollectSystem {
       value: drop.value
     });
 
-    // Scene must implement collectXP(drop) to handle awarding the value and releasing the drop.
-    this.scene.collectXP?.(drop);
+    // Scene must implement collectDrop(drop) to handle awarding the value and releasing the drop.
+    (this.scene.collectDrop ?? this.scene.collectXP)?.(drop);
   }
 }

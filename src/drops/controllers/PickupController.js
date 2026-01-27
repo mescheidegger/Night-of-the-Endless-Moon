@@ -25,10 +25,12 @@ export class PickupController {
     // MagnetSystem pulls drops toward the player after their magnet delay.
     this.magnetSystem = new MagnetSystem(scene, { group, player, passiveManager, dropManager });
 
-    // Expose collectXP for legacy code paths. The wrapper lets us detach it on
-    // destroy() without mutating GameScene directly.
-    this._collectHook = (orb) => this.collectXP(orb);
+    // Expose collectDrop/collectXP for legacy code paths. The wrapper lets us
+    // detach it on destroy() without mutating GameScene directly.
+    this._collectHook = (drop) => this.collectDrop(drop);
+    this.scene.collectDrop = this._collectHook;
     this.scene.collectXP = this._collectHook;
+
 
     if (group && player) {
       this.overlap = scene.physics.add.overlap(player, group, this.collectSystem.onOverlap);
@@ -44,22 +46,40 @@ export class PickupController {
   }
 
   /**
-   * Handle XP reward and recycle the drop back into the pool.
+   * Handle drop rewards (XP, health, etc.) and recycle the drop back into the pool.
    */
-  collectXP(orb) {
-    if (!orb || !orb.active) return;
+  collectDrop(drop) {
+    if (!drop || !drop.active) return;
 
-    const raw = (typeof orb.value === 'object') ? orb.value?.amount : orb.value;
-    const gained = Math.max(0, Number(raw) || 0);
+    const value = (typeof drop.value === 'object' && drop.value !== null)
+      ? drop.value
+      : { currency: 'xp', amount: drop.value };
+    const amount = Math.max(0, Number(value?.amount) || 0);
 
-    if (gained > 0) {
-      this.levelFlow?.addXP?.(gained);
-      this.scene.playerXP = Number(this.scene.playerXP ?? 0) + gained;
+    if (amount > 0) {
+      if (value?.currency === 'health') {
+        const health = this.scene.playerHealth ?? this.scene.hero?.health;
+        const healed = health?.heal?.(amount);
+        if (healed) {
+          this.scene.events?.emit('player:healed', { amount, source: drop.type });
+        }
+      } else {
+        this.levelFlow?.addXP?.(amount);
+        this.scene.playerXP = Number(this.scene.playerXP ?? 0) + amount;
+      }
     }
 
-    orb.body?.stop?.();
-    orb.body?.setVelocity(0, 0);
-    this.dropManager?.release?.(orb);
+    // collectDrop tail
+    drop.body?.stop?.();
+    drop.body?.setVelocity?.(0, 0);
+    this.dropManager?.release?.(drop);
+  }
+
+  /**
+   * Backward-compatible XP entry point.
+   */
+  collectXP(orb) {
+    this.collectDrop(orb);
   }
 
   /**
@@ -69,6 +89,10 @@ export class PickupController {
     if (this.overlap) {
       this.scene.physics?.world?.removeCollider?.(this.overlap);
       this.overlap = null;
+    }
+
+    if (this.scene && this.scene.collectDrop === this._collectHook) {
+      delete this.scene.collectDrop;
     }
 
     if (this.scene && this.scene.collectXP === this._collectHook) {

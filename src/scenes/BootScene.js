@@ -73,6 +73,8 @@ export class BootScene extends Phaser.Scene {
     // registry references this key so future art swaps remain data-driven.
     this.load.image('xpgem', '/assets/sprites/gems/xpgem.png');
     this.load.image('largexpgem', '/assets/sprites/gems/largexpgem.png');
+    this.load.image('minorhealth', '/assets/sprites/gems/minorhealth.png');
+    this.load.image('majorhealth', '/assets/sprites/gems/majorhealth.png');
     this.load.image('menumoon', '/assets/blood_moon_transparent.png');
     this.load.bitmapFont('damage', '/assets/fonts/damage.png', '/assets/fonts/damage.xml');
 
@@ -175,6 +177,9 @@ export class BootScene extends Phaser.Scene {
       'ground',
       'player_glow',
       'xpgem',
+      'largexpgem',
+      'minorhealth',
+      'majorhealth',
       'menumoon',
       HERO_ATLAS_KEY,
       ...mobTextures,
