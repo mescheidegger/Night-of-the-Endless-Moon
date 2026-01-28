@@ -483,7 +483,7 @@ const HEROES = {
       speed: 115,
       maxVelocity: 165,
       maxHealth: 150,
-      iframeMs: 100,
+      iframeMs: 300,
       drag: 0,
       damping: false
     },
@@ -570,7 +570,7 @@ const HEROES = {
       speed: 115,
       maxVelocity: 165,
       maxHealth: 150,
-      iframeMs: 100,
+      iframeMs: 300,
       drag: 0,
       damping: false
     },
@@ -661,7 +661,7 @@ const HEROES = {
       speed: 115,
       maxVelocity: 160,
       maxHealth: 150,
-      iframeMs: 100,
+      iframeMs: 300,
       drag: 0,
       damping: false
     },

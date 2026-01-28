@@ -159,7 +159,7 @@ export const SpawnTimeline = [
       boneLegion(
         'cocodemon_elite',
         legionConfig({
-          count: 80,
+          count: 50,
           radius: 180,
           moveSpeed: 100,
           angularSpeed: 0,
@@ -202,7 +202,7 @@ export const SpawnTimeline = [
     atMin: paceMin(5),
     duration: 18,
     behavior: 'blend',
-    spawns: [ring('audrey1', 30), ring('vlad', 30)],
+    spawns: [ring('audrey1', 60), ring('vlad', 60)],
   }),
 
   // 6: Crawlybones elite-style walls plus plant backline (all elites)
@@ -281,7 +281,7 @@ export const SpawnTimeline = [
       boneLegion(
         'barnabas',
         legionConfig({
-          count: 80,
+          count: 120,
           radius: 200,
           moveSpeed: 110,
           angularSpeed: 0,
