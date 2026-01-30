@@ -10,6 +10,8 @@ export function cleanupGameScene(scene) {
   // Remove all scene-level event + keyboard bindings installed during create().
   scene._disposeEvents?.();
   scene._disposeEvents = null;
+  scene.props?.destroy?.();
+  scene.props = null;
 
   // Safety unbind in case any system registered extra listeners outside wireGameSceneEvents.
   scene.events.off('enemy:died', scene._onEnemyDied);

@@ -81,21 +81,18 @@ export class Pool {
   release(obj) {
     if (!obj) return;
 
-    // Physics objects use disableBody()
-    if (obj.disableBody) {
+    // During scene shutdown, Arcade bodies can already be removed.
+    if (obj.disableBody && obj.body) {
       obj.disableBody(true, true);
-    }
-    else {
-      // Simple display object (e.g., Images inside FX system)
-      obj.setActive(false).setVisible(false);
+    } else {
+      obj.setActive?.(false);
+      obj.setVisible?.(false);
     }
 
-    // Give the object a chance to clear transient state (velocity, timers,
-    // etc.) so future resets start cleanly.
     obj.onRelease?.();
-
     this._onRelease?.(obj);
   }
+
 
   /**
    * Register pool-level hooks that run when objects are activated or released.

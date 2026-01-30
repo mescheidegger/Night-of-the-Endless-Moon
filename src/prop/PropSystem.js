@@ -286,11 +286,16 @@ export class PropSystem {
    * the mapping so it can be repopulated when it comes back on screen.
    */
   _releaseChunk(key) {
-    const arr = this.chunkToProps.get(key);
+    const map = this.chunkToProps;
+    if (!map) return;
+
+    const arr = map.get(key);
     if (!arr) return;
-    for (const obj of arr) this.pool.release(obj);
-    this.chunkToProps.delete(key);
+
+    for (const obj of arr) this.pool?.release?.(obj);
+    map.delete(key);
   }
+
 
   /** Call each frame (or on camera move) to maintain chunk visibility. */
   update() {
@@ -309,6 +314,48 @@ export class PropSystem {
       if (!this._visible.has(key)) {
         this._releaseChunk(key);
       }
+    }
+  }
+
+  /**
+   * Release pooled props and detach references for safe teardown.
+   */
+  destroy() {
+    // Idempotent teardown — safe if called multiple times during shutdown/restart.
+    if (this._destroyed) return;
+    this._destroyed = true;
+
+    const chunkToProps = this.chunkToProps;
+    const pool = this.pool;
+
+    // Null early to avoid re-entrancy issues.
+    this.chunkToProps = null;
+    this._visible = null;
+    this._prevVisible = null;
+    this.group = null;
+    this.pool = null;
+    this.scene = null;
+
+    // Release any spawned props if we still have the map.
+    if (chunkToProps && typeof chunkToProps.keys === 'function') {
+      const keys = Array.from(chunkToProps.keys());
+      for (const key of keys) {
+        const arr = chunkToProps.get(key);
+        if (!arr) continue;
+
+        for (const obj of arr) {
+          pool?.release?.(obj); // Pool.release is already shutdown-safe now
+        }
+        chunkToProps.delete(key);
+      }
+      chunkToProps.clear();
+    }
+
+    // During Scene shutdown, avoid destroying the group. Clear is best-effort only.
+    try {
+      pool?.group?.clear?.(true, true);
+    } catch {
+      // ignore during shutdown
     }
   }
 }

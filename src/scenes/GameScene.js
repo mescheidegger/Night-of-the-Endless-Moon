@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { FXSystem } from '../fx/FXSystem.js';
 import { PropSystem } from '../prop/PropSystem.js';
-import { PropRegistry } from '../prop/PropRegistry.js';
+import { PropRegistries } from '../prop/PropRegistry.js';
 import { EndRunMenu } from '../ui/GameOverMenu.js';
 import { registerMobAnimations } from '../mob/MobAnimations.js';
 import { DEFAULT_HERO_KEY, getHeroEntry, LEGACY_DEFAULT_STARTER_LOADOUT } from '../hero/HeroRegistry.js';
@@ -33,6 +33,7 @@ import { getOrCreateSoundManager } from '../audio/SoundManager.js';
 import { setupAudioSystem } from '../audio/AudioSystem.js';
 import { DEV_RUN } from '../config/gameConfig.js';
 import { WerewolfEncounter } from '../encounters/WerewolfEncounter.js';
+import { DEFAULT_MAP_KEY, MapRegistry } from '../maps/MapRegistry.js';
 import { resetRunState } from './game/resetRunState.js';
 import { PauseController } from './game/PauseController.js';
 import { wireGameSceneEvents } from './game/wireEvents.js';
@@ -96,17 +97,25 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setRoundPixels(true);
     this.cameras.main.setBackgroundColor(0x0b0f18);
 
+    const mapKey = this.scene?.settings?.data?.mapKey ?? DEFAULT_MAP_KEY;
+    this.mapKey = mapKey;
+    this.mapConfig = MapRegistry[mapKey] ?? MapRegistry[DEFAULT_MAP_KEY];
+
     // Tile the ground texture independently of camera scroll/zoom.
-    this.groundLayer = new GroundLayer(this);
+    this.groundLayer = new GroundLayer(this, this.mapConfig.ground);
 
     // Props still live in the scene because they couple closely with physics
     // colliders and spawn state. The registry keeps decoration data-driven.
-    this.props = new PropSystem(this, {
-      chunkSize: 384,
-      seed: 12345,
-      density: 3,
-      registry: PropRegistry
-    });
+    if (this.mapConfig.props?.enabled === false) {
+      this.props = null;
+    } else {
+      const registryKey = this.mapConfig.props?.registryKey ?? 'all';
+      const registry = PropRegistries[registryKey] ?? PropRegistries.all;
+      this.props = new PropSystem(this, {
+        ...this.mapConfig.props,
+        registry,
+      });
+    }
 
     // Screen-space overlay that handles the blood moon pulse animation.
     this.bloodMoon = new BloodMoonOverlay(this);
@@ -170,19 +179,21 @@ export class GameScene extends Phaser.Scene {
     this.fx = new FXSystem(this);
     this.damageNumbers = new DamageNumberSystem(this, { fontKey: 'damage', size: 16 });
 
-    const propColliders = this.props.getColliderGroup();
+    const propColliders = this.props?.getColliderGroup?.() ?? null;
     const enemyGroup = this.enemyPools.getAllGroup();
-    this.physics.add.collider(this.hero.sprite, propColliders);
-    this.physics.add.collider(
-      enemyGroup,
-      propColliders,
-      /* collideCallback */ undefined,
-      /* processCallback */ (enemy /* from enemyGroup */, _prop /* from propColliders */) => {
-        const cfg = enemy?.mobKey ? resolveMobConfig(enemy.mobKey) : null;
-        // Only non-boss mobs should collide with props
-        return cfg?.tier !== 'boss';
-      }
-    );
+    if (propColliders) {
+      this.physics.add.collider(this.hero.sprite, propColliders);
+      this.physics.add.collider(
+        enemyGroup,
+        propColliders,
+        /* collideCallback */ undefined,
+        /* processCallback */ (enemy /* from enemyGroup */, _prop /* from propColliders */) => {
+          const cfg = enemy?.mobKey ? resolveMobConfig(enemy.mobKey) : null;
+          // Only non-boss mobs should collide with props
+          return cfg?.tier !== 'boss';
+        }
+      );
+    }
 
     this.physics.add.overlap(
       this.hero.sprite,

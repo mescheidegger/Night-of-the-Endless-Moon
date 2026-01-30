@@ -28,11 +28,14 @@ export const PROP_ATLASES = [
 /**
  * Build the prop registry from atlas frames and overrides for easy expansion.
  */
-function createPropEntries() {
+function createPropEntries(themeFilter = null) {
   const entries = {};
 
   for (const atlas of PROP_ATLASES) {
     const { key: atlasKey, frames = [], theme } = atlas;
+    if (themeFilter && theme !== themeFilter) {
+      continue;
+    }
 
     frames.forEach((frame) => {
       const cleanFrame = frame.replace(/\.png$/i, '');
@@ -63,6 +66,14 @@ function createPropEntries() {
 }
 
 export const PropRegistry = createPropEntries();
+export const PropRegistries = (() => {
+  const registries = { all: PropRegistry };
+  const themes = new Set(PROP_ATLASES.map((atlas) => atlas.theme).filter(Boolean));
+  for (const theme of themes) {
+    registries[theme] = createPropEntries(theme);
+  }
+  return registries;
+})();
 
 /**
  * Picks a random prop definition from the registry using weighted probability.

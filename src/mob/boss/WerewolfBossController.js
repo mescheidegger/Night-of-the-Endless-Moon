@@ -93,9 +93,6 @@ export class WerewolfBossController {
     this.state = stateName;
     this.stateElapsedMs = 0;
 
-    // Helpful, but not too spammy (state transitions only)
-    console.log(`[WerewolfBoss] ${prev ?? 'none'} -> ${stateName}`);
-
     const nextState = this._states[stateName];
     nextState?.enter?.();
   }

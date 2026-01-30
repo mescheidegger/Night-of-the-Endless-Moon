@@ -4,13 +4,14 @@
  * handling are kept in one place.
  */
 export class GroundLayer {
-  constructor(scene) {
+  constructor(scene, config = {}) {
     this.scene = scene;
     const cam = scene.cameras.main;
+    const textureKey = config.textureKey ?? 'ground';
 
     // Create a screen-space tile sprite that ignores scroll but honours zoom.
     this.sprite = scene.add
-      .tileSprite(cam.width / 2, cam.height / 2, cam.width, cam.height, 'ground')
+      .tileSprite(cam.width / 2, cam.height / 2, cam.width, cam.height, textureKey)
       .setOrigin(0.5)
       .setDepth(0)
       .setScrollFactor(0);
