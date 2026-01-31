@@ -85,6 +85,8 @@ export class MagnetSystem {
     const dropManager = this.dropManager ?? this.scene.dropManager ?? null;
     const maxKeepDistance = Math.max(0, CONFIG.XP.MAX_KEEP_DISTANCE ?? 0);
     const maxKeepDistanceSq = maxKeepDistance > 0 ? maxKeepDistance * maxKeepDistance : 0;
+    const mapRuntime = this.scene.mapRuntime;
+    const bounds = mapRuntime?.isBounded?.() ? mapRuntime.getWorldBounds?.() : null;
 
     // NEW: pull buffs from passives
     const pm = this.passiveManager ?? this.scene.passiveManager ?? null;
@@ -110,9 +112,12 @@ export class MagnetSystem {
       const dy = pCenterY - dCenterY;
       const distSq = dx * dx + dy * dy;
 
-      const expiredByDistance = maxKeepDistanceSq > 0 && distSq > maxKeepDistanceSq;
+      const expiredByDistance = !bounds && maxKeepDistanceSq > 0 && distSq > maxKeepDistanceSq;
+      const expiredByBounds = bounds
+        ? (dCenterX < bounds.left || dCenterX > bounds.right || dCenterY < bounds.top || dCenterY > bounds.bottom)
+        : false;
 
-      if (expiredByTime || expiredByDistance) {
+      if (expiredByTime || expiredByDistance || expiredByBounds) {
         dropManager?.release?.(drop);
         return;
       }

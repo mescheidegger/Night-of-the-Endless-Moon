@@ -15,18 +15,16 @@ import { pickOne, resolveAttempt, resolveValue } from '../utils.js';
  * @returns {boolean}                     - True if at least one enemy spawned
  */
 export function batWave(ctx, mobKey, t, mobEntry = {}) {
-  const { scene, enemyPools, modeKey = null } = ctx ?? {};
+  const { scene, enemyPools, heroSprite, modeKey = null } = ctx ?? {};
   if (!scene) return false;
 
   // Acquire the pool for this mob type; if missing, we can't spawn.
   const pool = enemyPools?.getPool?.(mobKey);
   if (!pool) return false;
 
-  // Camera/world view used to place waves just outside the visible area.
   const mobConfig = resolveMobConfig(mobKey);
   const camera = scene.cameras?.main;
   const view = camera?.worldView;
-  if (!view) return false;
 
   // Wave-specific config (functions or constants), resolved below against `t`.
   const waveConfig = mobEntry.wave ?? {};
@@ -58,6 +56,56 @@ export function batWave(ctx, mobKey, t, mobEntry = {}) {
   const margin = buffer + 32;
 
   let spawnedCount = 0;
+
+  const runtime = scene.mapRuntime;
+  if (runtime?.isBounded?.()) {
+    const totalCount = totalGroups * groupSize;
+    for (let i = 0; i < totalCount; i += 1) {
+      if (!enemyPools?.canSpawn?.(mobKey)) break;
+      const direction = pickOne(directions) ?? 'L2R';
+      const velocityX = direction === 'R2L' ? -speed : direction === 'L2R' ? speed : 0;
+      const velocityY = direction === 'T2B' ? speed : direction === 'B2T' ? -speed : 0;
+      const spawnPoint = scene.spawnDirector?.getSpawnPoint?.({ heroSprite, margin: 32, attempts: 12 });
+      if (!spawnPoint) continue;
+      const enemy = pool.get(spawnPoint.x, spawnPoint.y);
+      if (!enemy) continue;
+      enemy.reset(spawnPoint.x, spawnPoint.y, mobKey, {
+        ai,
+        stats: { speed, maxSpeed: speed },
+      });
+      enemy._spawnModeKey = modeKey;
+      enemy._baseVel = { x: velocityX, y: velocityY };
+      enemy._waveMargin = margin * 1.2;
+      enemy._aiTime = 0;
+      if (ai === 'flySine') {
+        let amplitude = spacing * 0.8;
+        if (waveConfig.amplitude !== undefined) {
+          const resolved = resolveValue(waveConfig.amplitude, t, amplitude);
+          const numeric = Number(resolved);
+          if (Number.isFinite(numeric)) {
+            amplitude = Math.max(0, numeric);
+          }
+        }
+
+        let frequency = 0.0055;
+        if (waveConfig.frequency !== undefined) {
+          const resolvedFreq = resolveValue(waveConfig.frequency, t, frequency);
+          const numericFreq = Number(resolvedFreq);
+          if (Number.isFinite(numericFreq)) {
+            frequency = Math.max(0.0005, numericFreq);
+          }
+        }
+
+        enemy._waveAmplitude = amplitude;
+        enemy._waveFrequency = frequency;
+      }
+      enemy.setVelocity(velocityX, velocityY);
+      spawnedCount += 1;
+    }
+    return spawnedCount;
+  }
+
+  if (!view) return false;
 
   // Emit `totalGroups` formation lines this tick.
   for (let g = 0; g < totalGroups; g++) {

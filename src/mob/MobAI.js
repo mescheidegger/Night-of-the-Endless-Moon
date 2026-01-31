@@ -43,6 +43,22 @@ function ensureBaseVelocity(enemy) {
 function releaseIfOffscreen(enemy, scene, margin = 64) {
   if (!enemy?.active || !scene) return false;
 
+  const mapRuntime = scene.mapRuntime;
+  if (mapRuntime?.isBounded?.()) {
+    const bounds = mapRuntime.getWorldBounds?.();
+    if (!bounds) return false;
+    const expand = Number.isFinite(enemy._waveMargin) ? enemy._waveMargin : margin;
+    const left = bounds.left - expand;
+    const right = bounds.right + expand;
+    const top = bounds.top - expand;
+    const bottom = bounds.bottom + expand;
+    if (enemy.x < left || enemy.x > right || enemy.y < top || enemy.y > bottom) {
+      scene.enemyPools?.release?.(enemy);
+      return true;
+    }
+    return false;
+  }
+
   const camera = scene.cameras?.main;
   const view = camera?.worldView;
   if (!view) return false;

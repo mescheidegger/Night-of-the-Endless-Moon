@@ -188,6 +188,17 @@ export class WerewolfBossController {
    * Pick a random patrol point inside the camera view with a margin.
    */
   _pickPointInView(margin) {
+    const runtime = this.scene?.mapRuntime;
+    if (runtime?.isBounded?.()) {
+      const spawnDirector = this.scene?.spawnDirector;
+      const point = spawnDirector?.getSpawnPoint?.({
+        heroSprite: this._hero(),
+        margin,
+        attempts: 16,
+      });
+      if (point) return point;
+    }
+
     const cam = this.scene?.cameras?.main;
     const view = cam?.worldView;
     if (!view) {

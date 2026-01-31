@@ -41,7 +41,8 @@ export class SettingsMenu {
 
     const panelBg = this.scene.add.rectangle(0, 0, PANEL_WIDTH, PANEL_HEIGHT, 0x0f1424, 0.96)
       .setOrigin(0.5)
-      .setStrokeStyle(2, 0xff5d88, 0.9);
+      .setStrokeStyle(2, 0xff5d88, 0.9)
+      .setInteractive({ cursor: 'default' });
 
     // ---------------------------
     // Title (top anchored)
@@ -99,6 +100,8 @@ export class SettingsMenu {
       duration: 140,
       ease: 'Sine.easeOut'
     });
+
+    this.backdrop.once('pointerup', () => this.close());
 
     this._bindKeys();
   }

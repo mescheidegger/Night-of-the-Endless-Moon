@@ -35,6 +35,8 @@ export function cleanupGameScene(scene) {
   scene.hud?.destroy?.();
   scene.groundLayer?.destroy?.();
   scene.bloodMoon?.destroy?.();
+  scene.mapDebugOverlay?.destroy?.();
+  scene.mapDebugOverlay = null;
 
   // Menus are scene-level overlays and can linger across restarts if not removed.
   scene.endRunMenu?.destroy();

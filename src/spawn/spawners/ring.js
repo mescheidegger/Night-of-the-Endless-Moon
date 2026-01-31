@@ -40,9 +40,10 @@ export function ring(ctx, mobKey, t, mobEntry = {}) {
     if (!enemyPools?.canSpawn?.(mobKey)) break;
 
     // Choose a random direction around the hero.
-    const angle = Math.random() * Math.PI * 2;
-    const x = heroSprite.x + Math.cos(angle) * radius;
-    const y = heroSprite.y + Math.sin(angle) * radius;
+    const spawnPoint = scene.spawnDirector?.getSpawnPoint?.({ heroSprite, radius, attempts: 12 })
+      ?? { x: heroSprite.x, y: heroSprite.y };
+    const x = spawnPoint.x;
+    const y = spawnPoint.y;
 
     // Retrieve pooled enemy; if pool is empty, skip gracefully.
     const enemy = pool.get(x, y);

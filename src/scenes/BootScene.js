@@ -11,6 +11,7 @@ import { loadWeaponAssets } from '../weapons/WeaponAssets.js';
 import { registerWeaponAnimations } from '../weapons/registerWeaponAnimations.js';
 import { PassiveRegistry } from '../passives/PassiveRegistry.js';
 import { AUDIO_MANIFEST } from '../audio/audioManifest.js';
+import { MapRegistry } from '../maps/MapRegistry.js';
 
 export class BootScene extends Phaser.Scene {
   /** Initialize BootScene state so runtime dependencies are ready. */
@@ -99,6 +100,16 @@ export class BootScene extends Phaser.Scene {
       '/assets/sprites/weapons/weaponanimations.json'
     );
 
+    Object.values(MapRegistry).forEach((mapEntry) => {
+      const tilemap = mapEntry?.tilemap;
+      if (!tilemap?.jsonKey || !tilemap?.jsonPath) return;
+      this.load.tilemapTiledJSON(tilemap.jsonKey, tilemap.jsonPath);
+      (tilemap.tilesets ?? []).forEach((tileset) => {
+        if (!tileset?.key || !tileset?.path) return;
+        this.load.image(tileset.key, tileset.path);
+      });
+    });
+
     AUDIO_MANIFEST.forEach(({ key, url }) => {
       this.load.audio(key, url);
     });
@@ -173,6 +184,10 @@ export class BootScene extends Phaser.Scene {
       ? ['weaponanimations_atlas']
       : [];
 
+    const mapTileTextures = Object.values(MapRegistry).flatMap((mapEntry) =>
+      (mapEntry?.tilemap?.tilesets ?? []).map((tileset) => tileset.key)
+    );
+
     const required = [
       'ground',
       'player_glow',
@@ -188,7 +203,8 @@ export class BootScene extends Phaser.Scene {
       ...weaponTextures,
       ...weaponIconTextures,
       ...passiveTextures,
-      ...weaponAnimationTextures
+      ...weaponAnimationTextures,
+      ...mapTileTextures
     ];
 
     const missing = required.filter((k) => !this.textures.exists(k));

@@ -55,7 +55,59 @@ export class DropSpawner {
         ...restOverrides,
       };
 
-      this.dropManager?.spawn(x, y, type, mergedOverrides);
+      const spawnPoint = this._resolveSpawnPoint(x, y);
+      this.dropManager?.spawn(spawnPoint.x, spawnPoint.y, type, mergedOverrides);
     }
+  }
+
+  _resolveSpawnPoint(x, y) {
+    const runtime = this.scene?.mapRuntime;
+    if (!runtime?.isBounded?.()) {
+      return { x, y };
+    }
+
+    const bounds = runtime.getWorldBounds?.();
+    if (!bounds) return { x, y };
+
+    const clamped = runtime.clampPoint?.({ x, y }) ?? { x, y };
+    if (!this._isBlocked(clamped.x, clamped.y)) {
+      return clamped;
+    }
+
+    const offsets = [16, 32, 48, 64, 80, 96];
+    for (const offset of offsets) {
+      const candidates = [
+        { x: clamped.x + offset, y: clamped.y },
+        { x: clamped.x - offset, y: clamped.y },
+        { x: clamped.x, y: clamped.y + offset },
+        { x: clamped.x, y: clamped.y - offset },
+        { x: clamped.x + offset, y: clamped.y + offset },
+        { x: clamped.x - offset, y: clamped.y + offset },
+        { x: clamped.x + offset, y: clamped.y - offset },
+        { x: clamped.x - offset, y: clamped.y - offset },
+      ];
+
+      for (const candidate of candidates) {
+        const inside = candidate.x >= bounds.left && candidate.x <= bounds.right
+          && candidate.y >= bounds.top && candidate.y <= bounds.bottom;
+        if (!inside) continue;
+        if (!this._isBlocked(candidate.x, candidate.y)) {
+          return candidate;
+        }
+      }
+    }
+
+    const hero = this.scene?.hero?.sprite;
+    const fallback = runtime.clampPoint?.({
+      x: hero?.x ?? bounds.centerX,
+      y: hero?.y ?? bounds.centerY,
+    });
+    return fallback ?? { x: bounds.centerX, y: bounds.centerY };
+  }
+
+  _isBlocked(x, y) {
+    const mapQuery = this.scene?.mapQuery;
+    if (!mapQuery?.isWalkableWorldXY) return false;
+    return !mapQuery.isWalkableWorldXY(x, y);
   }
 }

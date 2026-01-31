@@ -33,10 +33,11 @@ export function wallLine(ctx, mobKey, t, mobEntry = {}) {
   const pool = enemyPools?.getPool?.(mobKey);
   if (!pool) return false;
 
-  // Need camera's worldView to compute edge/extent of current viewport.
   const mobConfig = resolveMobConfig(mobKey);
   const camera = scene.cameras?.main;
-  const view = camera?.worldView;
+  const runtime = scene.mapRuntime;
+  const bounds = runtime?.isBounded?.() ? runtime.getWorldBounds?.() : null;
+  const view = bounds ?? camera?.worldView;
   if (!view) return false;
 
   const wallConfig = mobEntry.wall ?? {};
@@ -62,7 +63,7 @@ export function wallLine(ctx, mobKey, t, mobEntry = {}) {
   // Keep spawns clearly off-screen: collider buffer + optional offset.
   const bodyBuffer = getBodySpawnBuffer(mobConfig.body);
   const offsetRaw = resolveValue(wallConfig.offset, t, 32);
-  const margin = bodyBuffer + (Number(offsetRaw) || 0);
+  const margin = bounds ? 0 : bodyBuffer + (Number(offsetRaw) || 0);
 
   // Orientation can be a single value or an array to randomize each wall.
   const orientationValue = resolveValue(wallConfig.orientation, t, 'vertical');
@@ -87,6 +88,7 @@ export function wallLine(ctx, mobKey, t, mobEntry = {}) {
 
   // Helper to spawn a single mob at (x,y) with runtime overrides.
   const attemptSpawn = (x, y) => {
+    if (scene.spawnDirector?.isPointBlocked?.(x, y)) return false;
     if (!enemyPools?.canSpawn?.(mobKey)) return false;
     const enemy = pool.get(x, y);
     if (!enemy) return false;

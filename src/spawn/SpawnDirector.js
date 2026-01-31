@@ -615,4 +615,56 @@ export class SpawnDirector {
   update() {
     // SpawnDirector relies on internal timers; explicit update hook reserved for future use.
   }
+
+  /**
+   * Resolve a spawn point for the current map type.
+   * - Infinite: uses a ring around the hero (existing behavior).
+   * - Bounded: samples random points inside world bounds until unblocked.
+   */
+  getSpawnPoint({ heroSprite, radius = 0, margin = 0, attempts = 12 } = {}) {
+    const runtime = this.scene?.mapRuntime;
+    const bounds = runtime?.getWorldBounds?.();
+
+    if (runtime?.isBounded?.() && bounds) {
+      const minX = bounds.left + margin;
+      const maxX = bounds.right - margin;
+      const minY = bounds.top + margin;
+      const maxY = bounds.bottom - margin;
+
+      for (let i = 0; i < attempts; i += 1) {
+        const x = Phaser.Math.FloatBetween(minX, maxX);
+        const y = Phaser.Math.FloatBetween(minY, maxY);
+        if (this.scene?.mapQuery?.isWalkableWorldXY?.(x, y)) {
+          return { x, y };
+        }
+      }
+
+      const fallback = runtime.clampPoint?.({
+        x: heroSprite?.x ?? bounds.centerX,
+        y: heroSprite?.y ?? bounds.centerY,
+      });
+      return fallback ?? { x: bounds.centerX, y: bounds.centerY };
+    }
+
+    if (heroSprite && Number.isFinite(radius) && radius > 0) {
+      const angle = Math.random() * Math.PI * 2;
+      return {
+        x: heroSprite.x + Math.cos(angle) * radius,
+        y: heroSprite.y + Math.sin(angle) * radius
+      };
+    }
+
+    const view = this.scene?.cameras?.main?.worldView;
+    if (view) {
+      return { x: view.centerX, y: view.centerY };
+    }
+
+    return { x: heroSprite?.x ?? 0, y: heroSprite?.y ?? 0 };
+  }
+
+  isPointBlocked(x, y) {
+    const mapQuery = this.scene?.mapQuery;
+    if (!mapQuery?.isWalkableWorldXY) return false;
+    return !mapQuery.isWalkableWorldXY(x, y);
+  }
 }

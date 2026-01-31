@@ -75,12 +75,18 @@ export function bossSpawn(ctx, mobKey, t, mobEntry = {}) {
   const spawnRadius = baseRadius + getBodySpawnBuffer(mobConfig.body);
 
   /**
-   * --- 7) Pick a Random Angle Around the Hero ---
-   * This keeps boss entry positions varied and unpredictable each run.
+   * --- 7) Pick a Spawn Point ---
+   * Bounded maps choose a valid point inside world bounds (not blocked).
+   * Infinite maps keep the off-screen ring behavior.
    */
+  const runtime = scene.mapRuntime;
+  const useBounded = runtime?.isBounded?.();
+  const spawnPoint = useBounded
+    ? scene.spawnDirector?.getSpawnPoint?.({ heroSprite, margin: 64, attempts: 20 })
+    : null;
   const angle = Math.random() * Math.PI * 2;
-  const x = heroSprite.x + Math.cos(angle) * spawnRadius;
-  const y = heroSprite.y + Math.sin(angle) * spawnRadius;
+  const x = spawnPoint?.x ?? (heroSprite.x + Math.cos(angle) * spawnRadius);
+  const y = spawnPoint?.y ?? (heroSprite.y + Math.sin(angle) * spawnRadius);
 
   // Re-check capacity in case another system spawned something this tick.
   if (!enemyPools?.canSpawn?.(mobKey)) return false;

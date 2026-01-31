@@ -6,8 +6,29 @@
 export class GroundLayer {
   constructor(scene, config = {}) {
     this.scene = scene;
+    this.mode = config.mode ?? 'infinite';
     const cam = scene.cameras.main;
     const textureKey = config.textureKey ?? 'ground';
+
+    if (this.mode === 'disabled' || this.mode === 'tilemap') {
+      this.sprite = null;
+      return;
+    }
+
+    if (this.mode === 'static') {
+      this.sprite = scene.add
+        .image(cam.width / 2, cam.height / 2, textureKey)
+        .setOrigin(0.5)
+        .setDepth(0)
+        .setScrollFactor(0);
+      this._onResize = (size) => {
+        if (!size || !this.sprite) return;
+        const { width, height } = size;
+        this.sprite.setPosition(width / 2, height / 2);
+      };
+      scene.scale.on('resize', this._onResize);
+      return;
+    }
 
     // Create a screen-space tile sprite that ignores scroll but honours zoom.
     this.sprite = scene.add
@@ -41,7 +62,7 @@ export class GroundLayer {
    * Update the tile sprite UV to match camera scroll and zoom.
    */
   update() {
-    if (!this.sprite) return;
+    if (!this.sprite || this.mode !== 'infinite') return;
     const cam = this.scene.cameras.main;
     const zoom = cam.zoom;
 
@@ -57,7 +78,9 @@ export class GroundLayer {
    * Remove listeners and destroy the sprite. Called from GameScene shutdown.
    */
   destroy() {
-    this.scene.scale.off('resize', this._onResize);
+    if (this._onResize) {
+      this.scene.scale.off('resize', this._onResize);
+    }
     this.sprite?.destroy();
     this.sprite = null;
     this.scene = null;

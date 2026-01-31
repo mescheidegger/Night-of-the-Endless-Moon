@@ -180,6 +180,8 @@ export class BallisticWeaponController extends WeaponControllerBase {
 
     const startY = origin.y;
     const camera = this.scene?.cameras?.main;
+    const mapRuntime = this.scene?.mapRuntime;
+    const bounds = mapRuntime?.isBounded?.() ? mapRuntime.getWorldBounds?.() : null;
     let descentTimer = null;
 
     data.flight = {
@@ -187,8 +189,11 @@ export class BallisticWeaponController extends WeaponControllerBase {
         const body = p.body;
         if (!body) return;
 
-        const view = camera?.worldView;
-        if (view && (p.x < view.x - 128 || p.x > view.right + 128 || p.y > view.bottom + 128)) {
+        const view = bounds ? null : camera?.worldView;
+        const outOfBounds = bounds
+          ? (p.x < bounds.left - 128 || p.x > bounds.right + 128 || p.y < bounds.top - 128 || p.y > bounds.bottom + 128)
+          : (view && (p.x < view.x - 128 || p.x > view.right + 128 || p.y > view.bottom + 128));
+        if (outOfBounds) {
           this._explodeProjectile(p); // explode / cleanup when flying off-screen
           return;
         }

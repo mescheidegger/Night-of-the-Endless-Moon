@@ -8,6 +8,9 @@ export function wireGameSceneEvents(scene) {
     removeBolt: Phaser.Input.Keyboard.KeyCodes.TWO,
     buffBolt: Phaser.Input.Keyboard.KeyCodes.THREE
   });
+  scene.debugMapKeys = scene.input.keyboard.addKeys({
+    toggleMapDebug: Phaser.Input.Keyboard.KeyCodes.B
+  });
 
   // Player death is handled via an event so the death controller can run its full animation first.
   const onPlayerDeathFinished = () => scene.handlePlayerDeathFinished();
@@ -51,6 +54,11 @@ export function wireGameSceneEvents(scene) {
   scene.input.keyboard.on('keydown-ESC', onPauseKey);
   scene.input.keyboard.on('keydown-P', onPauseKey);
 
+  const onToggleMapDebug = () => {
+    scene.mapDebugOverlay?.toggle?.();
+  };
+  scene.input.keyboard.on('keydown-B', onToggleMapDebug);
+
   // Return a disposer so GameScene shutdown can remove listeners in one place.
   return () => {
     scene.events.off('player:death:finished', onPlayerDeathFinished);
@@ -60,5 +68,6 @@ export function wireGameSceneEvents(scene) {
 
     scene.input.keyboard?.off('keydown-ESC', onPauseKey);
     scene.input.keyboard?.off('keydown-P', onPauseKey);
+    scene.input.keyboard?.off('keydown-B', onToggleMapDebug);
   };
 }

@@ -330,18 +330,25 @@ export class EnemyProjectileSystem {
    * - Recycle projectiles that drift far outside the camera view (with margin).
    */
   update() {
-    const view = this.scene.cameras?.main?.worldView;
-    if (!view) return;
-
     const margin = 96;
+    const mapRuntime = this.scene.mapRuntime;
+    const bounds = mapRuntime?.isBounded?.() ? mapRuntime.getWorldBounds?.() : null;
+    const view = bounds ? null : this.scene.cameras?.main?.worldView;
+    if (!bounds && !view) return;
+
     this.group.children?.iterate?.((projectile) => {
       if (!projectile?.active) return;
-      if (
-        projectile.x < view.x - margin ||
-        projectile.x > view.x + view.width + margin ||
-        projectile.y < view.y - margin ||
-        projectile.y > view.y + view.height + margin
-      ) {
+      const outsideBounds = bounds
+        ? (projectile.x < bounds.left - margin ||
+          projectile.x > bounds.right + margin ||
+          projectile.y < bounds.top - margin ||
+          projectile.y > bounds.bottom + margin)
+        : (projectile.x < view.x - margin ||
+          projectile.x > view.x + view.width + margin ||
+          projectile.y < view.y - margin ||
+          projectile.y > view.y + view.height + margin);
+
+      if (outsideBounds) {
         // also go through expiry so offscreen shots can explode
         this._handleExpiry(projectile);
       }

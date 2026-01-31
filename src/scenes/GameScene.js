@@ -34,6 +34,10 @@ import { setupAudioSystem } from '../audio/AudioSystem.js';
 import { DEV_RUN } from '../config/gameConfig.js';
 import { WerewolfEncounter } from '../encounters/WerewolfEncounter.js';
 import { DEFAULT_MAP_KEY, MapRegistry } from '../maps/MapRegistry.js';
+import { BoundedMapLoader } from '../maps/BoundedMapLoader.js';
+import { MapDebugOverlay } from '../maps/MapDebugOverlay.js';
+import { MapRuntime } from '../maps/MapRuntime.js';
+import { MapQuery } from '../maps/MapQuery.js';
 import { resetRunState } from './game/resetRunState.js';
 import { PauseController } from './game/PauseController.js';
 import { wireGameSceneEvents } from './game/wireEvents.js';
@@ -100,13 +104,36 @@ export class GameScene extends Phaser.Scene {
     const mapKey = this.scene?.settings?.data?.mapKey ?? DEFAULT_MAP_KEY;
     this.mapKey = mapKey;
     this.mapConfig = MapRegistry[mapKey] ?? MapRegistry[DEFAULT_MAP_KEY];
+    const mapType = this.mapConfig?.type ?? 'infinite';
+    const propMode = this.mapConfig?.props?.mode ?? 'procedural';
 
-    // Tile the ground texture independently of camera scroll/zoom.
-    this.groundLayer = new GroundLayer(this, this.mapConfig.ground);
+    this.mapTilemap = null;
+    this.mapLayers = [];
+    this.mapCollisionLayers = [];
+    this.mapObjectColliders = null;
+
+    if (mapType === 'bounded') {
+      this.groundLayer = new GroundLayer(this, { ...this.mapConfig.ground, mode: 'disabled' });
+
+      const loader = new BoundedMapLoader(this, this.mapConfig);
+      const {
+        map,
+        layersByName,
+        collisionLayers,
+        objectColliderGroup
+      } = loader.build();
+      this.mapTilemap = map;
+      this.mapLayers = Object.values(layersByName);
+      this.mapCollisionLayers = collisionLayers;
+      this.mapObjectColliders = objectColliderGroup;
+    } else {
+      // Tile the ground texture independently of camera scroll/zoom.
+      this.groundLayer = new GroundLayer(this, { ...this.mapConfig.ground, mode: 'infinite' });
+    }
 
     // Props still live in the scene because they couple closely with physics
     // colliders and spawn state. The registry keeps decoration data-driven.
-    if (this.mapConfig.props?.enabled === false) {
+    if (propMode !== 'procedural') {
       this.props = null;
     } else {
       const registryKey = this.mapConfig.props?.registryKey ?? 'all';
@@ -116,6 +143,16 @@ export class GameScene extends Phaser.Scene {
         registry,
       });
     }
+
+    this.mapRuntime = new MapRuntime(this.mapConfig, { tilemap: this.mapTilemap });
+    this.mapQuery = new MapQuery(this);
+    const worldBounds = this.mapRuntime.getWorldBounds();
+    if (this.mapRuntime.isBounded() && worldBounds) {
+      this.physics.world.setBounds(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
+      this.cameras.main.setBounds(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
+    }
+
+    this.mapDebugOverlay = new MapDebugOverlay(this);
 
     // Screen-space overlay that handles the blood moon pulse animation.
     this.bloodMoon = new BloodMoonOverlay(this);
@@ -141,6 +178,9 @@ export class GameScene extends Phaser.Scene {
     this.hero = HeroFactory.create(this, heroEntry.key, {
       onFacingChange: (dir) => { this.playerFacing = dir; }
     });
+    if (this.mapRuntime?.isBounded?.()) {
+      this.hero.sprite?.setCollideWorldBounds?.(true);
+    }
 
     // Preserve backwards compatibility with older systems that expected
     // `scene.player` / `scene.playerHealth` instead of the hero bundle.
@@ -181,6 +221,14 @@ export class GameScene extends Phaser.Scene {
 
     const propColliders = this.props?.getColliderGroup?.() ?? null;
     const enemyGroup = this.enemyPools.getAllGroup();
+    if (this.mapRuntime?.isBounded?.()) {
+      enemyGroup.children?.iterate?.((enemy) => {
+        enemy?.body?.setCollideWorldBounds?.(true);
+      });
+      enemyGroup.on?.('add', (enemy) => {
+        enemy?.body?.setCollideWorldBounds?.(true);
+      });
+    }
     if (propColliders) {
       this.physics.add.collider(this.hero.sprite, propColliders);
       this.physics.add.collider(
@@ -193,6 +241,18 @@ export class GameScene extends Phaser.Scene {
           return cfg?.tier !== 'boss';
         }
       );
+    }
+
+    if (this.mapCollisionLayers?.length) {
+      this.mapCollisionLayers.forEach((layer) => {
+        this.physics.add.collider(this.hero.sprite, layer);
+        this.physics.add.collider(enemyGroup, layer);
+      });
+    }
+
+    if (this.mapObjectColliders) {
+      this.physics.add.collider(this.hero.sprite, this.mapObjectColliders);
+      this.physics.add.collider(enemyGroup, this.mapObjectColliders);
     }
 
     this.physics.add.overlap(
