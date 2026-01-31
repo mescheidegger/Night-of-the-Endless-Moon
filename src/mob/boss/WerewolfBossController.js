@@ -189,6 +189,7 @@ export class WerewolfBossController {
    */
   _pickPointInView(margin) {
     const runtime = this.scene?.mapRuntime;
+    // Bounded maps ask SpawnDirector for a safe point inside world bounds.
     if (runtime?.isBounded?.()) {
       const spawnDirector = this.scene?.spawnDirector;
       const point = spawnDirector?.getSpawnPoint?.({

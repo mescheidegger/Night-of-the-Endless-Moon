@@ -58,6 +58,7 @@ export function batWave(ctx, mobKey, t, mobEntry = {}) {
   let spawnedCount = 0;
 
   const runtime = scene.mapRuntime;
+  // Bounded maps skip offscreen spawning and instead use bounded spawn points.
   if (runtime?.isBounded?.()) {
     const totalCount = totalGroups * groupSize;
     for (let i = 0; i < totalCount; i += 1) {

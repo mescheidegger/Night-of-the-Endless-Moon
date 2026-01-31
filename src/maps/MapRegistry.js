@@ -1,5 +1,6 @@
 export const DEFAULT_MAP_KEY = 'endless_default';
 
+// Registry of map configs; bounded entries include tilemap/collision metadata.
 export const MapRegistry = {
   endless_default: {
     type: 'infinite',
@@ -40,6 +41,7 @@ export const MapRegistry = {
       registryKey: 'grave',
     },
   },
+  // Bounded map example: loads a Tiled JSON and uses object layers as colliders.
   bounded_graveyard: {
     type: 'bounded',
     tilemap: {

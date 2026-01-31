@@ -44,6 +44,7 @@ function releaseIfOffscreen(enemy, scene, margin = 64) {
   if (!enemy?.active || !scene) return false;
 
   const mapRuntime = scene.mapRuntime;
+  // Bounded maps use world bounds instead of camera view for despawn logic.
   if (mapRuntime?.isBounded?.()) {
     const bounds = mapRuntime.getWorldBounds?.();
     if (!bounds) return false;

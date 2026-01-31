@@ -181,6 +181,7 @@ export class BallisticWeaponController extends WeaponControllerBase {
     const startY = origin.y;
     const camera = this.scene?.cameras?.main;
     const mapRuntime = this.scene?.mapRuntime;
+    // Bounded maps prefer world bounds for projectile cleanup.
     const bounds = mapRuntime?.isBounded?.() ? mapRuntime.getWorldBounds?.() : null;
     let descentTimer = null;
 

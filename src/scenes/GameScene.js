@@ -112,6 +112,7 @@ export class GameScene extends Phaser.Scene {
     this.mapCollisionLayers = [];
     this.mapObjectColliders = null;
 
+    // Bounded maps load a tilemap + colliders instead of infinite ground tiling.
     if (mapType === 'bounded') {
       this.groundLayer = new GroundLayer(this, { ...this.mapConfig.ground, mode: 'disabled' });
 
@@ -144,9 +145,11 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
+    // MapRuntime drives bounded helper logic (bounds, clamping, inside tests).
     this.mapRuntime = new MapRuntime(this.mapConfig, { tilemap: this.mapTilemap });
     this.mapQuery = new MapQuery(this);
     const worldBounds = this.mapRuntime.getWorldBounds();
+    // Clamp physics + camera to the bounded map rectangle.
     if (this.mapRuntime.isBounded() && worldBounds) {
       this.physics.world.setBounds(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
       this.cameras.main.setBounds(worldBounds.x, worldBounds.y, worldBounds.width, worldBounds.height);
@@ -178,6 +181,7 @@ export class GameScene extends Phaser.Scene {
     this.hero = HeroFactory.create(this, heroEntry.key, {
       onFacingChange: (dir) => { this.playerFacing = dir; }
     });
+    // Bounded maps keep the hero from leaving the world rectangle.
     if (this.mapRuntime?.isBounded?.()) {
       this.hero.sprite?.setCollideWorldBounds?.(true);
     }
@@ -221,6 +225,7 @@ export class GameScene extends Phaser.Scene {
 
     const propColliders = this.props?.getColliderGroup?.() ?? null;
     const enemyGroup = this.enemyPools.getAllGroup();
+    // Ensure bounded maps keep enemy bodies inside world bounds as they spawn.
     if (this.mapRuntime?.isBounded?.()) {
       enemyGroup.children?.iterate?.((enemy) => {
         enemy?.body?.setCollideWorldBounds?.(true);

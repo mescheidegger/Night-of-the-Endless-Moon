@@ -332,6 +332,7 @@ export class EnemyProjectileSystem {
   update() {
     const margin = 96;
     const mapRuntime = this.scene.mapRuntime;
+    // Bounded maps recycle projectiles by world bounds; infinite uses camera view.
     const bounds = mapRuntime?.isBounded?.() ? mapRuntime.getWorldBounds?.() : null;
     const view = bounds ? null : this.scene.cameras?.main?.worldView;
     if (!bounds && !view) return;

@@ -623,9 +623,11 @@ export class SpawnDirector {
    */
   getSpawnPoint({ heroSprite, radius = 0, margin = 0, attempts = 12 } = {}) {
     const runtime = this.scene?.mapRuntime;
+    // Bounded maps use world bounds for spawn sampling.
     const bounds = runtime?.getWorldBounds?.();
 
     if (runtime?.isBounded?.() && bounds) {
+      // Keep spawns inside bounds and walkable tiles for bounded maps.
       const minX = bounds.left + margin;
       const maxX = bounds.right - margin;
       const minY = bounds.top + margin;

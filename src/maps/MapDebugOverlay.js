@@ -1,3 +1,4 @@
+// Draws bounded map debug overlays (world bounds, collision tiles, object colliders).
 export class MapDebugOverlay {
   constructor(scene, { depth = 40, showCollisionTiles = true, showObjectColliders = true } = {}) {
     this.scene = scene;
@@ -28,6 +29,7 @@ export class MapDebugOverlay {
     if (!this.visible) return;
 
     const runtime = this.scene?.mapRuntime;
+    // Bounds exist only for bounded maps, so guard for null.
     const bounds = runtime?.getWorldBounds?.();
     if (bounds) {
       this.graphics.lineStyle(2, 0x44ff77, 1);
@@ -35,6 +37,7 @@ export class MapDebugOverlay {
     }
 
     if (this.showObjectColliders) {
+      // Visualize static object colliders that keep entities inside map geometry.
       const objectGroup = this.scene?.mapObjectColliders;
       const children = objectGroup?.getChildren?.() ?? [];
       this.graphics.lineStyle(1, 0xff5555, 0.9);
@@ -46,6 +49,7 @@ export class MapDebugOverlay {
     }
 
     if (this.showCollisionTiles) {
+      // Visualize tile collision layers used by bounded map geometry.
       const layers = this.scene?.mapCollisionLayers ?? [];
       this.graphics.lineStyle(1, 0xffd24d, 0.6);
       layers.forEach((layer) => {

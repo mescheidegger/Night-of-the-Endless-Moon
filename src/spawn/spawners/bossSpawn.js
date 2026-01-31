@@ -80,6 +80,7 @@ export function bossSpawn(ctx, mobKey, t, mobEntry = {}) {
    * Infinite maps keep the off-screen ring behavior.
    */
   const runtime = scene.mapRuntime;
+  // Flag ensures boss spawn uses bounded sampling when the map is finite.
   const useBounded = runtime?.isBounded?.();
   const spawnPoint = useBounded
     ? scene.spawnDirector?.getSpawnPoint?.({ heroSprite, margin: 64, attempts: 20 })

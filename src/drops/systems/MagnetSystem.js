@@ -86,6 +86,7 @@ export class MagnetSystem {
     const maxKeepDistance = Math.max(0, CONFIG.XP.MAX_KEEP_DISTANCE ?? 0);
     const maxKeepDistanceSq = maxKeepDistance > 0 ? maxKeepDistance * maxKeepDistance : 0;
     const mapRuntime = this.scene.mapRuntime;
+    // Bounded maps prefer world bounds for despawn checks, otherwise use distance.
     const bounds = mapRuntime?.isBounded?.() ? mapRuntime.getWorldBounds?.() : null;
 
     // NEW: pull buffs from passives

@@ -1,3 +1,4 @@
+// Handles loading/rendering of tiled maps and object colliders for bounded map layouts.
 export class BoundedMapLoader {
   constructor(scene, mapConfig) {
     this.scene = scene;
@@ -5,6 +6,7 @@ export class BoundedMapLoader {
   }
 
   build() {
+    // Bounded maps rely on a tilemap JSON config that defines layers + tilesets.
     const tilemapConfig = this.mapConfig.tilemap ?? {};
     if (!tilemapConfig.jsonKey) {
       console.warn('[BoundedMapLoader] Missing tilemap config');
@@ -17,6 +19,7 @@ export class BoundedMapLoader {
       };
     }
 
+    // Build the Phaser tilemap so the runtime can derive world bounds and colliders.
     const map = this.scene.make.tilemap({ key: tilemapConfig.jsonKey });
     const tilesets = (tilemapConfig.tilesets ?? [])
       .map((tileset) => {
@@ -33,6 +36,7 @@ export class BoundedMapLoader {
     const tileLayerRules = collisionConfig.tileLayerRules ?? {};
     const objectLayerRules = collisionConfig.objectLayerRules ?? {};
 
+    // Create render layers and opt-in collision based on map config rules.
     (map.layers ?? []).forEach((layerData, index) => {
       if (!layerData) return;
       if (layerData.type && layerData.type !== 'tilelayer') return;
@@ -49,6 +53,7 @@ export class BoundedMapLoader {
       }
     });
 
+    // Cache object layers for optional static collider construction.
     (map.objects ?? []).forEach((layerData) => {
       if (!layerData?.name) return;
       objectLayersByName[layerData.name] = layerData;
@@ -57,6 +62,7 @@ export class BoundedMapLoader {
     console.log('[BoundedMapLoader] object layer names found:', Object.keys(objectLayersByName));
     console.log('[BoundedMapLoader] objectLayerRules keys:', Object.keys(objectLayerRules ?? {}));
 
+    // Build static physics bodies from object layers for bounded maps.
     const objectColliderGroup = this._buildObjectColliders(objectLayersByName, objectLayerRules);
     const colliderCount = objectColliderGroup?.getChildren?.()?.length ?? 0;
     console.log('[BoundedMapLoader] object collider group count:', colliderCount);
@@ -71,12 +77,14 @@ export class BoundedMapLoader {
   }
 
   _buildObjectColliders(objectLayersByName, objectLayerRules) {
+    // Only layers opted-in by rules are converted into physics rectangles.
     const eligibleLayerNames = Object.keys(objectLayersByName).filter(
       (name) => objectLayerRules?.[name]
     );
     console.log('[BoundedMapLoader] eligible object layers:', eligibleLayerNames);
     if (!eligibleLayerNames.length) return null;
 
+    // Static group keeps object colliders fixed to the tiled map geometry.
     const group = this.scene.physics.add.staticGroup();
     eligibleLayerNames.forEach((layerName) => {
       const layerData = objectLayersByName[layerName];

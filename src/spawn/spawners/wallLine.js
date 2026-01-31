@@ -36,7 +36,9 @@ export function wallLine(ctx, mobKey, t, mobEntry = {}) {
   const mobConfig = resolveMobConfig(mobKey);
   const camera = scene.cameras?.main;
   const runtime = scene.mapRuntime;
+  // Bounded maps use world bounds to decide spawn edges.
   const bounds = runtime?.isBounded?.() ? runtime.getWorldBounds?.() : null;
+  // For bounded maps, bounds are the "view" used for wall placement.
   const view = bounds ?? camera?.worldView;
   if (!view) return false;
 

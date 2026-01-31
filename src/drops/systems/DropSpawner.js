@@ -62,10 +62,12 @@ export class DropSpawner {
 
   _resolveSpawnPoint(x, y) {
     const runtime = this.scene?.mapRuntime;
+    // Infinite maps can spawn drops at the exact kill location.
     if (!runtime?.isBounded?.()) {
       return { x, y };
     }
 
+    // Bounded maps clamp drops into the playable rectangle.
     const bounds = runtime.getWorldBounds?.();
     if (!bounds) return { x, y };
 
