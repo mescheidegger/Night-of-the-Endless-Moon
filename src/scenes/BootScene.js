@@ -11,7 +11,7 @@ import { loadWeaponAssets } from '../weapons/WeaponAssets.js';
 import { registerWeaponAnimations } from '../weapons/registerWeaponAnimations.js';
 import { PassiveRegistry } from '../passives/PassiveRegistry.js';
 import { AUDIO_MANIFEST } from '../audio/audioManifest.js';
-import { MapRegistry } from '../maps/MapRegistry.js';
+import { MapRegistry, listMaps } from '../maps/MapRegistry.js';
 
 export class BootScene extends Phaser.Scene {
   /** Initialize BootScene state so runtime dependencies are ready. */
@@ -110,6 +110,14 @@ export class BootScene extends Phaser.Scene {
       });
     });
 
+    listMaps().forEach((mapEntry) => {
+      const thumbnailKey = mapEntry?.ui?.thumbnailKey;
+      const thumbnailPath = mapEntry?.ui?.thumbnailPath;
+      if (thumbnailKey && thumbnailPath) {
+        this.load.image(thumbnailKey, thumbnailPath);
+      }
+    });
+
     AUDIO_MANIFEST.forEach(({ key, url }) => {
       this.load.audio(key, url);
     });
@@ -187,6 +195,9 @@ export class BootScene extends Phaser.Scene {
     const mapTileTextures = Object.values(MapRegistry).flatMap((mapEntry) =>
       (mapEntry?.tilemap?.tilesets ?? []).map((tileset) => tileset.key)
     );
+    const mapPreviewTextures = listMaps()
+      .map((mapEntry) => mapEntry?.ui?.thumbnailKey)
+      .filter(Boolean);
 
     const required = [
       'ground',
@@ -204,7 +215,8 @@ export class BootScene extends Phaser.Scene {
       ...weaponIconTextures,
       ...passiveTextures,
       ...weaponAnimationTextures,
-      ...mapTileTextures
+      ...mapTileTextures,
+      ...mapPreviewTextures
     ];
 
     const missing = required.filter((k) => !this.textures.exists(k));

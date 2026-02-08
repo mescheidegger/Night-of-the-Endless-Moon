@@ -1,12 +1,32 @@
 export const DEFAULT_MAP_KEY = 'endless_default';
 
+/**
+ * Format a registry key into a human-friendly label for UI fallbacks.
+ */
+function formatMapName(key) {
+  if (!key || typeof key !== 'string') {
+    return '';
+  }
+  const withSpaces = key.replace(/_/g, ' ');
+  return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+}
+
 // Registry of map configs; bounded entries include tilemap/collision metadata.
 export const MapRegistry = {
   endless_default: {
     type: 'infinite',
+    order: 1,
+    hidden: false,
     spawnTimelineKey: 'default',
     ground: {
       textureKey: 'ground',
+    },
+    ui: {
+      name: 'Blood Mire',
+      blurb: 'A familiar endless stretch of grass. Survive the night.',
+      thumbnailKey: 'map.preview.endless_default',
+      thumbnailPath: '/assets/tiles/largegrass.png',
+      typeLabel: 'Endless',
     },
     props: {
       mode: 'procedural',
@@ -18,9 +38,18 @@ export const MapRegistry = {
   },
   endless_blood: {
     type: 'infinite',
+    order: 2,
+    hidden: true,
     spawnTimelineKey: 'default',
     ground: {
       textureKey: 'ground',
+    },
+    ui: {
+      name: 'Blood Mire',
+      blurb: 'A corrupted field stained crimson. Endless waves await.',
+      thumbnailKey: 'map.preview.endless_blood',
+      thumbnailPath: '/assets/tiles/darkgrass.png',
+      typeLabel: 'Endless',
     },
     props: {
       mode: 'procedural',
@@ -32,9 +61,18 @@ export const MapRegistry = {
   },
   endless_grave: {
     type: 'infinite',
+    order: 3,
+    hidden: true,
     spawnTimelineKey: 'default',
     ground: {
       textureKey: 'ground',
+    },
+    ui: {
+      name: 'Graveyard Drift',
+      blurb: 'An endless drift among the resting dead.',
+      thumbnailKey: 'map.preview.endless_grave',
+      thumbnailPath: '/assets/tiles/graveyard/TX_Tileset_Grass.png',
+      typeLabel: 'Endless',
     },
     props: {
       mode: 'procedural',
@@ -47,7 +85,16 @@ export const MapRegistry = {
   // Bounded map example: loads a Tiled JSON and uses object layers as colliders.
   bounded_graveyard: {
     type: 'bounded',
+    order: 4,
+    hidden: false,
     spawnTimelineKey: 'bounded_graveyard',
+    ui: {
+      name: 'Graveyard',
+      blurb: 'A fixed graveyard with winding paths and tight corners.',
+      thumbnailKey: 'map.preview.bounded_graveyard',
+      thumbnailPath: '/assets/tiles/graveyard/TX_Struct.png',
+      typeLabel: 'Bounded',
+    },
     // tilemap config drives preloading + map creation in BootScene/BoundedMapLoader.
     tilemap: {
       jsonKey: 'map.graveyard.scarywary',
@@ -113,3 +160,38 @@ export const MapRegistry = {
     },
   },
 };
+
+/**
+ * Normalize map entries so UI consumers have a consistent shape.
+ */
+function applyMapDefaults(key, entry) {
+  const order = entry?.order ?? 0;
+  const ui = {
+    name: entry?.ui?.name ?? formatMapName(key),
+    blurb: entry?.ui?.blurb ?? 'Survive the night.',
+    thumbnailKey: entry?.ui?.thumbnailKey ?? null,
+    thumbnailPath: entry?.ui?.thumbnailPath ?? null,
+    typeLabel: entry?.ui?.typeLabel ?? (entry?.type === 'bounded' ? 'Bounded' : 'Endless'),
+  };
+
+  return {
+    key,
+    ...entry,
+    hidden: entry?.hidden ?? order < 0,
+    order,
+    ui,
+  };
+}
+
+/**
+ * Convenience helper used by selection UI to iterate map definitions.
+ */
+export function listMaps() {
+  return Object.entries(MapRegistry)
+    .map(([key, entry]) => applyMapDefaults(key, entry))
+    .sort((a, b) => {
+      const orderDiff = (a.order ?? 0) - (b.order ?? 0);
+      if (orderDiff !== 0) return orderDiff;
+      return (a.ui?.name ?? '').localeCompare(b.ui?.name ?? '');
+    });
+}

@@ -540,7 +540,7 @@ export class HeroSelectScene extends Phaser.Scene {
 
     // Brief delay lets the guard latch before `scene.start` tears the scene down.
     this.time.delayedCall(150, () => {
-      this.scene.start('game', { heroKey: hero.key });
+      this.scene.start('map-select', { heroKey: hero.key });
     });
   }
 
