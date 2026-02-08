@@ -365,6 +365,13 @@ function steerToPlayerBounded(enemy, player, scene, opts = {}) {
   return steerToWorldPointBounded(enemy, scene, player.x, player.y, opts);
 }
 
+function updateFlipFromVelocity(enemy) {
+  const vx = enemy?.body?.velocity?.x;
+  if (!Number.isFinite(vx) || vx === 0) return false;
+  enemy.setFlipX(vx < 0);
+  return true;
+}
+
 
 /**
  * Behavior dispatcher: each entry is a function applied once per frame to
@@ -558,7 +565,7 @@ export const ENEMY_BEHAVIORS = {
     const dirMag = Math.hypot(dirX, dirY);
     if (enemy._useBoundedMovement && isBoundedNavReady(scene, enemy)) {
       steerToWorldPointBounded(enemy, scene, slotX, slotY, { speed, stopDist: 10, arriveDist: 6, directSight: true });
-      enemy.setFlipX((slotX - enemy.x) < 0);
+      updateFlipFromVelocity(enemy);
     } else if (dirMag > 0.001) {
       const scale = speed / dirMag;
       enemy.setVelocity(dirX * scale, dirY * scale);
@@ -763,17 +770,20 @@ export const ENEMY_BEHAVIORS = {
       const denom = dist || 1;
       if (enemy._useBoundedMovement && isBoundedNavReady(scene)) {
         steerToPlayerBounded(enemy, player, scene, { speed, stopDist: meleeRange, arriveDist: 6, directSight: true });
+        updateFlipFromVelocity(enemy);
       } else {
         enemy.setVelocity((dx / denom) * speed, (dy / denom) * speed);
+        enemy.setFlipX(dx < 0);
       }
-      enemy.setFlipX(dx < 0);
       ensureMoveAnim();
       return;
     }
 
     // In melee range → stop + stand idle.
     enemy.setVelocity(0, 0);
-    enemy.setFlipX(dx < 0);
+    if (!enemy._useBoundedMovement) {
+      enemy.setFlipX(dx < 0);
+    }
     ensureIdleAnim();
 
     // Still recovering from prior attack → wait.
@@ -920,15 +930,18 @@ export const ENEMY_BEHAVIORS = {
       const denom = dist || 1;
       if (enemy._useBoundedMovement && isBoundedNavReady(scene)) {
         steerToPlayerBounded(enemy, player, scene, { speed, stopDist: holdDistance, arriveDist: 6, directSight: true });
+        updateFlipFromVelocity(enemy);
       } else {
         enemy.setVelocity((dx / denom) * speed, (dy / denom) * speed);
+        enemy.setFlipX(dx < 0);
       }
-      enemy.setFlipX(dx < 0);
       ensureMoveAnim();
     } else {
       // Either in "hold" phase or already within comfort radius
       enemy.setVelocity(0, 0);
-      enemy.setFlipX(dx < 0);
+      if (!enemy._useBoundedMovement) {
+        enemy.setFlipX(dx < 0);
+      }
       ensureIdleAnim();
     }
 
