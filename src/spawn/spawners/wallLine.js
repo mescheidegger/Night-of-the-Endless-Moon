@@ -67,10 +67,16 @@ export function wallLine(ctx, mobKey, t, mobEntry = {}) {
     return false;
   }
 
-  // Keep spawns clearly off-screen: collider buffer + optional offset.
   const bodyBuffer = getBodySpawnBuffer(mobConfig.body);
   const offsetRaw = resolveValue(wallConfig.offset, t, 32);
-  const margin = bounds ? 0 : bodyBuffer + (Number(offsetRaw) || 0);
+  const offset = Number(offsetRaw) || 0;
+
+  // Infinite: still offscreen
+  const margin = bounds ? 0 : bodyBuffer + offset;
+
+  // Bounded: spawn INSIDE the bounds, not on the bounds line.
+  // This avoids edge-coordinate tile sampling issues and avoids collision edge rows.
+  const inset = bounds ? Math.max(1, bodyBuffer + offset) : 0;
 
   // Orientation can be a single value or an array to randomize each wall.
   const orientationValue = resolveValue(wallConfig.orientation, t, 'vertical');
@@ -146,17 +152,18 @@ export function wallLine(ctx, mobKey, t, mobEntry = {}) {
   if (sides?.length) {
     sides.forEach((side) => {
       switch (side) {
+        // when bounds are used as view, build INSIDE edges:
         case 'top':
-          buildWall(true, view.top - margin);
+          buildWall(true, view.top + inset);
           break;
         case 'bottom':
-          buildWall(true, view.bottom + margin);
+          buildWall(true, view.bottom - inset);
           break;
         case 'left':
-          buildWall(false, view.left - margin);
+          buildWall(false, view.left + inset);
           break;
         case 'right':
-          buildWall(false, view.right + margin);
+          buildWall(false, view.right - inset);
           break;
         default:
           break;
@@ -178,16 +185,16 @@ export function wallLine(ctx, mobKey, t, mobEntry = {}) {
     if (horizontal) {
       const distTop = Math.abs(spawnAnchor.y - bounds.top);
       const distBottom = Math.abs(bounds.bottom - spawnAnchor.y);
-      fixed = distTop <= distBottom ? view.y - margin : view.bottom + margin;
+      fixed = distTop <= distBottom ? (view.top + inset) : (view.bottom - inset);
     } else {
       const distLeft = Math.abs(spawnAnchor.x - bounds.left);
       const distRight = Math.abs(bounds.right - spawnAnchor.x);
-      fixed = distLeft <= distRight ? view.x - margin : view.right + margin;
+      fixed = distLeft <= distRight ? (view.left + inset) : (view.right - inset);
     }
   } else {
     fixed = horizontal
-      ? (Math.random() < 0.5 ? view.y - margin : view.bottom + margin)
-      : (Math.random() < 0.5 ? view.x - margin : view.right + margin);
+      ? (Math.random() < 0.5 ? (view.top + inset) : (view.bottom - inset))
+      : (Math.random() < 0.5 ? (view.left + inset) : (view.right - inset));
   }
 
   buildWall(horizontal, fixed);
