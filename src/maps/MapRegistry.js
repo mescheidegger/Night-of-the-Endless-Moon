@@ -4,6 +4,7 @@ export const DEFAULT_MAP_KEY = 'endless_default';
 export const MapRegistry = {
   endless_default: {
     type: 'infinite',
+    spawnTimelineKey: 'default',
     ground: {
       textureKey: 'ground',
     },
@@ -17,6 +18,7 @@ export const MapRegistry = {
   },
   endless_blood: {
     type: 'infinite',
+    spawnTimelineKey: 'default',
     ground: {
       textureKey: 'ground',
     },
@@ -30,6 +32,7 @@ export const MapRegistry = {
   },
   endless_grave: {
     type: 'infinite',
+    spawnTimelineKey: 'default',
     ground: {
       textureKey: 'ground',
     },
@@ -44,6 +47,7 @@ export const MapRegistry = {
   // Bounded map example: loads a Tiled JSON and uses object layers as colliders.
   bounded_graveyard: {
     type: 'bounded',
+    spawnTimelineKey: 'bounded_graveyard',
     // tilemap config drives preloading + map creation in BootScene/BoundedMapLoader.
     tilemap: {
       jsonKey: 'map.graveyard.scarywary',

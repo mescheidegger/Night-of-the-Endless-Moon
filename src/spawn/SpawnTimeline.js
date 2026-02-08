@@ -121,7 +121,7 @@ const timelineEvent = ({
 // All "original minute marks" (1..14) are converted via paceMin().
 // Any bossSpawn "appearAt" values are aligned to the repaced event time.
 // ---------------------------
-export const SpawnTimeline = [
+export const SpawnTimelineDefault = [
   // 1: Early mixed fodder ring burst (evileye + littlescary)
   timelineEvent({
     id: 'evileye_littlescary_ring_mix_1min',
@@ -546,3 +546,12 @@ export const SpawnTimeline = [
     },
   }),
 ];
+
+export const SpawnTimeline = SpawnTimelineDefault;
+// TODO: Replace with bounded-specific pacing once the graveyard timeline is authored.
+export const SpawnTimelineBoundedGraveyard = SpawnTimelineDefault;
+export const DEFAULT_SPAWN_TIMELINE_KEY = 'default';
+export const SpawnTimelineRegistry = {
+  [DEFAULT_SPAWN_TIMELINE_KEY]: SpawnTimelineDefault,
+  bounded_graveyard: SpawnTimelineBoundedGraveyard,
+};

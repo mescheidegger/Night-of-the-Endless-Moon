@@ -16,7 +16,7 @@ import { DropSpawner } from '../drops/systems/DropSpawner.js';
 import { EnemyPools } from '../combat/EnemyPools.js';
 import { SpawnDirector } from '../spawn/SpawnDirector.js';
 import { SpawnRegistry } from '../spawn/SpawnRegistry.js';
-import { SpawnTimeline } from '../spawn/SpawnTimeline.js';
+import { DEFAULT_SPAWN_TIMELINE_KEY, SpawnTimeline, SpawnTimelineRegistry } from '../spawn/SpawnTimeline.js';
 import { GroundLayer } from '../world/GroundLayer.js';
 import { BloodMoonOverlay } from '../world/BloodMoonOverlay.js';
 import { LevelUpFlow } from '../progression/LevelUpFlow.js';
@@ -387,7 +387,9 @@ export class GameScene extends Phaser.Scene {
 
     // SpawnDirector drives enemy spawn pacing; DropSpawner feeds deaths into
     // the pickup pool, and DamagePipeline routes damage events through FX.
-    const spawnConfig = { ...SpawnRegistry, timeline: SpawnTimeline };
+    const spawnTimelineKey = this.mapConfig?.spawnTimelineKey ?? DEFAULT_SPAWN_TIMELINE_KEY;
+    const resolvedTimeline = SpawnTimelineRegistry[spawnTimelineKey] ?? SpawnTimeline;
+    const spawnConfig = { ...SpawnRegistry, timeline: resolvedTimeline };
     this.spawnDirector = new SpawnDirector(this, this.enemyPools, spawnConfig);
     this.dropSpawner = new DropSpawner(this, this.dropManager, DropTables);
     this.damagePipeline = new DamagePipeline(this, {
