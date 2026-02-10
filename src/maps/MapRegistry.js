@@ -25,7 +25,7 @@ export const MapRegistry = {
       name: 'Blood Mire',
       blurb: 'A familiar endless stretch of grass. Survive the night.',
       thumbnailKey: 'map.preview.endless_default',
-      thumbnailPath: '/assets/tiles/largegrass.png',
+      thumbnailPath: '/assets/tiles/icons/bloodmire_icon.png',
       typeLabel: 'Endless',
     },
     props: {
@@ -92,7 +92,7 @@ export const MapRegistry = {
       name: 'Graveyard',
       blurb: 'A fixed graveyard with winding paths and tight corners.',
       thumbnailKey: 'map.preview.bounded_graveyard',
-      thumbnailPath: '/assets/tiles/graveyard/TX_Struct.png',
+      thumbnailPath: '/assets/tiles/icons/graveyard_icon.png',
       typeLabel: 'Bounded',
     },
     // tilemap config drives preloading + map creation in BootScene/BoundedMapLoader.

@@ -1,8 +1,8 @@
-Night of the Blood Moon
+Night of the Crimson Moon
 =======================================
 
 A dark-fantasy, top-down survivor-lite inspired by Vampire Survivors and
-classic roguelikes. Fight endless waves of monsters under a cursed blood
+classic roguelikes. Fight endless waves of monsters under a cursed crimson
 moon, collect upgrades, and push your build as far as it can go before
 the night consumes you.
 
@@ -14,10 +14,10 @@ Play the game: https://www.nightofthebloodmoon.io/
 
 ------------------------------------------------------------------------
 
-Night of the Blood Moon — System Overview
+Night of the Crimson Moon — System Overview
 =======================================
 
-Concise, code-facing notes for working inside the Night of the Blood Moon prototype. The project uses Vite to bundle a Phaser 3 top-down survivor-lite with Arcade Physics and pixel-art rendering.
+Concise, code-facing notes for working inside the Night of the Crimson Moon prototype. The project uses Vite to bundle a Phaser 3 top-down survivor-lite with Arcade Physics and pixel-art rendering.
 
 ----------------------------------------------------------------
 

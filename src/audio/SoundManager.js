@@ -15,6 +15,7 @@ export class SoundManager {
     this.musicBus = 'music';
     this.musicBaseVolume = 1.0;
     this._hasLoadedFromStorage = false;
+    this._pendingMusicRequest = null;
   }
 
   setScene(scene) {
@@ -23,6 +24,10 @@ export class SoundManager {
 
   playSfx(key, config = {}) {
     if (!key || !this.scene) return null;
+
+    if (!this.scene.cache?.audio?.exists(key)) {
+      return null;
+    }
 
     const now = this.scene.time?.now ?? 0;
 
@@ -75,6 +80,12 @@ export class SoundManager {
       return;
     }
 
+    if (!this.scene.cache?.audio?.exists(key)) {
+      this._pendingMusicRequest = { key, config };
+      return;
+    }
+
+    this._pendingMusicRequest = null;
     const requestedBus = config.bus ?? 'music';
     const baseVolume = config.volume ?? 1.0;
 
@@ -95,6 +106,20 @@ export class SoundManager {
     this.music = this.scene.sound.add(key, { loop: true });
     this._updateMusicVolume();
     this.music.play();
+  }
+
+  tryPlayPendingMusic() {
+    if (!this._pendingMusicRequest) {
+      return;
+    }
+
+    const { key, config } = this._pendingMusicRequest;
+    if (!this.scene?.cache?.audio?.exists(key)) {
+      return;
+    }
+
+    this._pendingMusicRequest = null;
+    this.playMusic(key, config);
   }
 
   stopMusic() {

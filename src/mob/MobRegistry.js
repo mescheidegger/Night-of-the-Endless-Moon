@@ -1682,7 +1682,7 @@ export const MobRegistry = {
 
     defaultFrame: 0,
     defaultAnim: 'werewolf:walk',
-    depth: 4,
+    depth: 321,
     scale: 1,
     origin: { x: 0.5, y: 0.85 },
 

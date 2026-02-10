@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { getOrCreateSoundManager } from '../audio/SoundManager.js';
+import { AUDIO_MANIFEST } from '../audio/audioManifest.js';
 import { SettingsMenu } from '../ui/SettingsMenu.js';
 
 export class MenuScene extends Phaser.Scene {
@@ -41,24 +42,47 @@ export class MenuScene extends Phaser.Scene {
 
     // ------- Audio unlock -------
     if (this.sound.locked) {
-      console.log('[MenuScene] WebAudio is locked, waiting for user gesture');
 
       const unlock = () => {
         this.sound.unlock();
-        console.log('[MenuScene] WebAudio unlocked');
         startMusicIfReady();
       };
 
       this.input.once('pointerdown', unlock);
       this.input.keyboard?.once('keydown', unlock);
     } else {
-      console.log('[MenuScene] WebAudio already unlocked');
       startMusicIfReady();
     }
 
+    // Load audio files in background lazily
+    this.time.delayedCall(0, () => {
+      const missingAudio = AUDIO_MANIFEST.filter(({ key }) => !this.cache.audio.exists(key));
+
+      if (!missingAudio.length) {
+        // If everything is already cached, still try starting music (unlocked permitting)
+        if (!this.sound.locked) this.soundManager?.tryPlayPendingMusic();
+        return;
+      }
+
+      this.load.once('complete', () => {
+        if (!this.sound.locked) this.soundManager?.tryPlayPendingMusic();
+      });
+
+      this.load.on('loaderror', (file) => {
+        console.error('[MenuScene] audio loaderror:', file?.key, file?.src);
+      });
+
+      missingAudio.forEach(({ key, url }) => {
+        // Tip: keep url as-is; but log it so you can confirm it’s correct
+        this.load.audio(key, url);
+      });
+
+      this.load.start();
+    });
+
     // ------- Title -------
     const title = this.add.text(this.scale.width / 2, this.scale.height * 0.25,
-      'NIGHT OF THE\nBLOOD MOON',
+      'NIGHT OF THE\nCRIMSON MOON',
       {
         fontFamily: 'monospace',
         fontSize: '48px',
@@ -141,7 +165,7 @@ export class MenuScene extends Phaser.Scene {
       }
       this._openModal('About', [
         'When the blood moon rises, the dead answer its call.',
-        'Night of the Blood Moon is a dark-fantasy survival game set on a cursed battlefield of graves and ruin.',
+        'Night of the Crimson Moon is a dark-fantasy survival game set on a cursed battlefield of graves and ruin.',
         'Fight through relentless hordes, collect blue shards to grow stronger, and forge a build powerful enough to last until dawn.',
         'If you survive the night, a final boss awaits.',
         '',

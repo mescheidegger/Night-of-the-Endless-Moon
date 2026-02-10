@@ -52,7 +52,7 @@ export class PauseMenu {
       align: 'center'
     }).setOrigin(0.5);
 
-    const subtitle = this.scene.add.text(0, 0, 'Night of the Blood Moon', {
+    const subtitle = this.scene.add.text(0, 0, 'Night of the Crimson Moon', {
       font: '16px monospace',
       color: '#f7cfe3',
       align: 'center'
