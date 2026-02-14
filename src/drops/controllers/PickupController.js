@@ -1,3 +1,4 @@
+import { TreasurePickupModal } from '../../ui/TreasurePickupModal.js';
 import { CollectSystem } from '../systems/CollectSystem.js';
 import { MagnetSystem } from '../systems/MagnetSystem.js';
 
@@ -15,6 +16,8 @@ export class PickupController {
     this.scene = scene;
     this.dropManager = dropManager;
     this.levelFlow = levelFlow;
+    this.treasureModal = null;
+    this._treasurePauseHeld = false;
 
     const group = dropManager?.getGroup?.();
     const passiveManager = scene.passiveManager ?? null;
@@ -31,7 +34,6 @@ export class PickupController {
     this.scene.collectDrop = this._collectHook;
     this.scene.collectXP = this._collectHook;
 
-
     if (group && player) {
       this.overlap = scene.physics.add.overlap(player, group, this.collectSystem.onOverlap);
     }
@@ -45,12 +47,7 @@ export class PickupController {
     this.magnetSystem?.update?.(dt);
   }
 
-  /**
-   * Handle drop rewards (XP, health, etc.) and recycle the drop back into the pool.
-   */
-  collectDrop(drop) {
-    if (!drop || !drop.active) return;
-
+  _applyDropReward(drop) {
     const value = (typeof drop.value === 'object' && drop.value !== null)
       ? drop.value
       : { currency: 'xp', amount: drop.value };
@@ -68,8 +65,81 @@ export class PickupController {
         this.scene.playerXP = Number(this.scene.playerXP ?? 0) + amount;
       }
     }
+  }
 
-    // collectDrop tail
+  _showTreasureModal(drop) {
+    if (!drop?.active) return;
+
+    this._acquireTreasurePause();
+
+    this.treasureModal?.destroy?.();
+    this.treasureModal = new TreasurePickupModal(this.scene, {
+      depthBase: this.scene.mapRender?.uiBaseDepth ?? 0,
+      onClose: () => {
+        if (drop?.active) {
+          this.dropManager?.release?.(drop);
+        }
+        this.treasureModal = null;
+        this._releaseTreasurePause();
+      }
+    });
+  }
+
+  _acquireTreasurePause() {
+    if (this._treasurePauseHeld) return;
+    this.scene?._acquireSimulationPause?.('treasurePickup');
+    this._treasurePauseHeld = true;
+  }
+
+  _releaseTreasurePause() {
+    if (!this._treasurePauseHeld) return;
+    this.scene?._releaseSimulationPause?.('treasurePickup');
+    this._treasurePauseHeld = false;
+  }
+
+  _collectTreasure(drop) {
+    drop._pickupLocked = true;
+    drop.body?.stop?.();
+    drop.body?.setVelocity?.(0, 0);
+
+    const didStartOpen = drop.playOpenAnimationOnce(() => {
+      if (!drop?.active) {
+        this._releaseTreasurePause();
+        return;
+      }
+
+      this.scene.events?.emit('treasure:opened', {
+        drop,
+        type: drop.type,
+        value: drop.value
+      });
+
+      this._showTreasureModal(drop);
+    });
+
+    if (!didStartOpen) {
+      this.scene.events?.emit('treasure:opened', {
+        drop,
+        type: drop.type,
+        value: drop.value
+      });
+      this._showTreasureModal(drop);
+    }
+  }
+
+  /**
+   * Handle drop rewards (XP, health, etc.) and recycle the drop back into the pool.
+   */
+  collectDrop(drop) {
+    if (!drop || !drop.active || drop._pickupLocked) return;
+
+    if (drop.isTreasure) {
+      this._collectTreasure(drop);
+      return;
+    }
+
+    this._applyDropReward(drop);
+
     drop.body?.stop?.();
     drop.body?.setVelocity?.(0, 0);
     this.dropManager?.release?.(drop);
@@ -90,6 +160,10 @@ export class PickupController {
       this.scene.physics?.world?.removeCollider?.(this.overlap);
       this.overlap = null;
     }
+
+    this.treasureModal?.destroy?.();
+    this.treasureModal = null;
+    this._releaseTreasurePause();
 
     if (this.scene && this.scene.collectDrop === this._collectHook) {
       delete this.scene.collectDrop;

@@ -27,6 +27,24 @@ const TREASURE_DROP_BEHAVIOR = {
 
 const TREASURE_VALUE = { currency: 'treasure', amount: 0 };
 
+const makeTreasureDrop = (type, closedFrame, openFrame) => ({
+  texture: 'treasures_sheet',
+  frame: closedFrame,
+  type,
+  isTreasure: true,
+  idleAnim: null,
+  openAnim: { key: `drop_${type}_open`, frames: [closedFrame, openFrame], frameRate: 3, repeat: 0 },
+
+  scale: CONFIG.XP.SCALE,
+  depth: CONFIG.XP.DEPTH,
+
+  value: TREASURE_VALUE,
+  body: { type: 'circle', r: CONFIG.XP.BODY_RADIUS },
+  ...TREASURE_DROP_BEHAVIOR,
+  audio: null,
+  lifetimeMs: CONFIG.XP.DROP_TTL_MS,
+});
+
 /**
  * DropRegistry
  *
@@ -167,74 +185,9 @@ export const DropRegistry = {
     // Time-to-live before the drop despawns (ms)
     lifetimeMs: CONFIG.XP.DROP_TTL_MS
   },
-  treasure_1: {
-    texture: 'treasures_sheet',
-    frame: 0,
-    anim: { key: 'drop_treasure_1', frames: [0, 4], frameRate: 3, repeat: -1 },
-
-    scale: CONFIG.XP.SCALE,
-    depth: CONFIG.XP.DEPTH,
-
-    value: TREASURE_VALUE,
-    body: { type: 'circle', r: CONFIG.XP.BODY_RADIUS },
-    ...TREASURE_DROP_BEHAVIOR,
-    audio: null,
-    lifetimeMs: CONFIG.XP.DROP_TTL_MS,
-  },
-  treasure_2: {
-    texture: 'treasures_sheet',
-    frame: 1,
-    anim: { key: 'drop_treasure_2', frames: [1, 5], frameRate: 3, repeat: -1 },
-
-    scale: CONFIG.XP.SCALE,
-    depth: CONFIG.XP.DEPTH,
-
-    value: TREASURE_VALUE,
-    body: { type: 'circle', r: CONFIG.XP.BODY_RADIUS },
-    ...TREASURE_DROP_BEHAVIOR,
-    audio: null,
-    lifetimeMs: CONFIG.XP.DROP_TTL_MS,
-  },
-  treasure_3: {
-    texture: 'treasures_sheet',
-    frame: 2,
-    anim: { key: 'drop_treasure_3', frames: [2, 6], frameRate: 3, repeat: -1 },
-
-    scale: CONFIG.XP.SCALE,
-    depth: CONFIG.XP.DEPTH,
-
-    value: TREASURE_VALUE,
-    body: { type: 'circle', r: CONFIG.XP.BODY_RADIUS },
-    ...TREASURE_DROP_BEHAVIOR,
-    audio: null,
-    lifetimeMs: CONFIG.XP.DROP_TTL_MS,
-  },
-  treasure_4: {
-    texture: 'treasures_sheet',
-    frame: 3,
-    anim: { key: 'drop_treasure_4', frames: [3, 7], frameRate: 3, repeat: -1 },
-
-    scale: CONFIG.XP.SCALE,
-    depth: CONFIG.XP.DEPTH,
-
-    value: TREASURE_VALUE,
-    body: { type: 'circle', r: CONFIG.XP.BODY_RADIUS },
-    ...TREASURE_DROP_BEHAVIOR,
-    audio: null,
-    lifetimeMs: CONFIG.XP.DROP_TTL_MS,
-  },
-  treasure_5: {
-    texture: 'treasures_sheet',
-    frame: 8,
-    anim: { key: 'drop_treasure_5', frames: [8, 12], frameRate: 3, repeat: -1 },
-
-    scale: CONFIG.XP.SCALE,
-    depth: CONFIG.XP.DEPTH,
-
-    value: TREASURE_VALUE,
-    body: { type: 'circle', r: CONFIG.XP.BODY_RADIUS },
-    ...TREASURE_DROP_BEHAVIOR,
-    audio: null,
-    lifetimeMs: CONFIG.XP.DROP_TTL_MS,
-  }
+  treasure_1: makeTreasureDrop('treasure_1', 0, 4),
+  treasure_2: makeTreasureDrop('treasure_2', 1, 5),
+  treasure_3: makeTreasureDrop('treasure_3', 2, 6),
+  treasure_4: makeTreasureDrop('treasure_4', 3, 7),
+  treasure_5: makeTreasureDrop('treasure_5', 8, 12)
 };

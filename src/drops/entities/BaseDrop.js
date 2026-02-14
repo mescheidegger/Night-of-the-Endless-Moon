@@ -39,14 +39,19 @@ export class BaseDrop extends Phaser.Physics.Arcade.Sprite {
     this.maxSpeed = 0;                          // max velocity while being magnet-pulled
     this.accel = 0;                             // acceleration toward the player
     this.spawnImpulseEnabled = true;            // whether DropManager should fan this drop out on spawn
+    this.isTreasure = false;
+    this.isOpening = false;
+    this.opened = false;
+    this._pickupLocked = false;
+    this._openAnimKey = null;
+    this._idleAnimKey = null;
 
     // Lifetime tracking
     this.spawnedAt = 0;
     this.expiresAt = 0;
   }
 
-  _ensureAnimation(row, texture) {
-    const anim = row?.anim;
+  _ensureAnimation(anim, texture) {
     const key = anim?.key;
     if (!key) return null;
 
@@ -83,10 +88,10 @@ export class BaseDrop extends Phaser.Physics.Arcade.Sprite {
     const frame = row.frame ?? 0;
     this.setTexture(texture, frame);
 
-    const animationKey = this._ensureAnimation(row, texture);
-    if (animationKey) {
-      this.anims.play(animationKey, true);
-    }
+    const idleAnimationKey = this._ensureAnimation(row?.idleAnim ?? row?.anim, texture);
+    const openAnimationKey = this._ensureAnimation(row?.openAnim, texture);
+    this._idleAnimKey = idleAnimationKey;
+    this._openAnimKey = openAnimationKey;
 
     // Optional scale override for visual sizing.
     if (row.scale !== undefined) {
@@ -102,6 +107,21 @@ export class BaseDrop extends Phaser.Physics.Arcade.Sprite {
     this.setActive(true).setVisible(true);
     this.setAngle(0);
     this.clearTint();
+
+    this.isTreasure = row.isTreasure === true;
+    this.isOpening = false;
+    this.opened = false;
+    this._pickupLocked = false;
+
+    if (this.isTreasure) {
+      if (idleAnimationKey) {
+        this.anims.play(idleAnimationKey, true);
+      } else {
+        this.setFrame(frame);
+      }
+    } else if (idleAnimationKey) {
+      this.anims.play(idleAnimationKey, true);
+    }
 
     // Physics reset phase.
     const body = this.body;
@@ -185,6 +205,12 @@ export class BaseDrop extends Phaser.Physics.Arcade.Sprite {
     this.maxSpeed = 0;
     this.accel = 0;
     this.spawnImpulseEnabled = true;
+    this.isTreasure = false;
+    this.isOpening = false;
+    this.opened = false;
+    this._pickupLocked = false;
+    this._openAnimKey = null;
+    this._idleAnimKey = null;
 
     // Reset lifetime.
     this.spawnedAt = 0;
@@ -193,5 +219,26 @@ export class BaseDrop extends Phaser.Physics.Arcade.Sprite {
     // Reset economic & logical identity.
     this.value = { currency: 'xp', amount: 0 };
     this.type = DEFAULT_DROP_TYPE;
+  }
+
+  playOpenAnimationOnce(onComplete) {
+    if (!this.active || !this.isTreasure || this.isOpening || this.opened) return false;
+
+    this.isOpening = true;
+    this.once('animationcomplete', () => {
+      this.isOpening = false;
+      this.opened = true;
+      onComplete?.();
+    });
+
+    if (this._openAnimKey) {
+      this.anims.play(this._openAnimKey, true);
+    } else {
+      this.isOpening = false;
+      this.opened = true;
+      onComplete?.();
+    }
+
+    return true;
   }
 }

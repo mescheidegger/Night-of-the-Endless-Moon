@@ -93,7 +93,7 @@ export class CollectSystem {
    * can be handled outside this system.
    */
   _collect(drop) {
-    if (!drop || !drop.active) return;
+    if (!drop || !drop.active || drop._pickupLocked || drop.isOpening) return;
 
     this.scene.events?.emit('drop:collected', {
       drop,
