@@ -2,6 +2,12 @@ export const PassiveRegistry = {
   might: {
     key: 'might',
     maxStacks: 1,
+    unlock: {
+      firstEligibleLevel: 1,
+      stackUnlock: {
+        mode: 'interval'
+      }
+    },
     effects: {
       damagePct: 0.25
     },
@@ -19,6 +25,14 @@ export const PassiveRegistry = {
   vampiresKiss: {
     key: 'vampiresKiss',
     maxStacks: 3,
+    unlock: {
+      firstEligibleLevel: 2,
+      stackUnlock: {
+        mode: 'interval',
+        intervalLevels: 8,
+        startAtStack: 2
+      }
+    },
     effects: {
       lifeStealChance: 0.05,
       lifeStealAmount: 5
@@ -37,6 +51,15 @@ export const PassiveRegistry = {
   multiShot: {
     key: 'multiShot',
     maxStacks: 2,
+    unlock: {
+      firstEligibleLevel: 15,
+      stackUnlock: {
+        mode: 'table',
+        levelsByStack: {
+          2: 30
+        }
+      }
+    },
     effects: {
       projectileSalvoFlat: 2
     },
@@ -54,6 +77,12 @@ export const PassiveRegistry = {
   bloodwindtreads: {
     key: 'bloodwindtreads',
     maxStacks: 3,           // tune as you like
+    unlock: {
+      firstEligibleLevel: 1,
+      stackUnlock: {
+        mode: 'interval'
+      }
+    },
     effects: {
       // e.g. 0.10 = +10% move speed per stack
       moveSpeedPct: 0.10
@@ -72,6 +101,14 @@ export const PassiveRegistry = {
   bloodrush: {
     key: 'bloodrush',
     maxStacks: 3,
+    unlock: {
+      firstEligibleLevel: 4,
+      stackUnlock: {
+        mode: 'interval',
+        intervalLevels: 10,
+        startAtStack: 2
+      }
+    },
     effects: {
       // 0.10 = +10% attack speed per stack (i.e., -10% cooldown)
       attackSpeedPct: 0.10
@@ -89,6 +126,14 @@ export const PassiveRegistry = {
   shield: {
     key: 'shield',
     maxStacks: 3,
+    unlock: {
+      firstEligibleLevel: 3,
+      stackUnlock: {
+        mode: 'interval',
+        intervalLevels: 10,
+        startAtStack: 2
+      }
+    },
     effects: {
       iframeMsBonus: 200
     },
@@ -105,6 +150,16 @@ export const PassiveRegistry = {
   reapersReach: {
     key: 'reapersReach',
     maxStacks: 3,
+    unlock: {
+      firstEligibleLevel: 5,
+      stackUnlock: {
+        mode: 'table',
+        levelsByStack: {
+          2: 14,
+          3: 24
+        }
+      }
+    },
     effects: {
       // +25% radius / speed per stack (tune as you like)
       xpMagnetRadiusPct: 0.25,

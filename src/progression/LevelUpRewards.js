@@ -1,7 +1,7 @@
 import { WeaponRegistry } from '../weapons/WeaponRegistry.js';
 import { PassiveRegistry, isValidPassive } from '../passives/PassiveRegistry.js';
 import { CONFIG, LEVEL_UP } from '../config/gameConfig.js';
-import { canGrantNextStack } from '../passives/passiveStackGate.js';
+import { canGrantNextStack, getPassiveFirstEligibleLevel } from '../passives/passiveStackGate.js';
 import * as WeaponProgression from '../weapons/WeaponProgression.js';
 
 const PASSIVE_SEED_OFFSET = 0x9e3779b9;
@@ -93,9 +93,9 @@ function normalizeWeaponCandidates(candidates, allowedSet, ownedSet) {
 }
 
 /**
- * Filter + dedupe passive candidates while respecting stack caps and allowlists.
+ * Filter + dedupe passive candidates while respecting stack caps and per-passive unlock policy.
  */
-function normalizePassiveCandidates(candidates, allowedSet, ownedCounts) {
+function filterPassiveCandidates(candidates, allowedSet, ownedCounts, level) {
   const unique = new Set();
   const filtered = [];
 
@@ -108,25 +108,24 @@ function normalizePassiveCandidates(candidates, allowedSet, ownedCounts) {
     const owned = ownedCounts.get(key) ?? 0;
     if (owned >= maxStacks) return;
 
+    if (owned === 0) {
+      const firstEligibleLevel = getPassiveFirstEligibleLevel(key, LEVEL_UP);
+      if (level < firstEligibleLevel) return;
+    } else {
+      const eligibleForNextStack = canGrantNextStack({
+        passiveKey: key,
+        level,
+        currentCount: owned,
+        config: LEVEL_UP
+      });
+      if (!eligibleForNextStack) return;
+    }
+
     unique.add(key);
     filtered.push(key);
   });
 
   return filtered;
-}
-
-/**
- * Filter passive candidates by global stack-level gating knobs.
- */
-function filterPassiveCandidatesByStackGate(candidates, ownedCounts, level) {
-  return candidates.filter((key) => {
-    const currentCount = ownedCounts.get(key) ?? 0;
-    return canGrantNextStack({
-      level,
-      currentCount,
-      config: LEVEL_UP
-    });
-  });
 }
 
 /**
@@ -352,14 +351,11 @@ export function getPassiveChoices({
     candidates = allowedKeys.slice();
   }
 
-  const filtered = normalizePassiveCandidates(candidates, allowedSet, ownedCounts);
+  const filtered = filterPassiveCandidates(candidates, allowedSet, ownedCounts, level);
   if (!filtered.length) return [];
 
-  const stackGateFiltered = filterPassiveCandidatesByStackGate(filtered, ownedCounts, level);
-  if (!stackGateFiltered.length) return [];
-
   const seed = buildSeed(scene, level, PASSIVE_SEED_OFFSET);
-  const shuffled = deterministicShuffle(stackGateFiltered, seed);
+  const shuffled = deterministicShuffle(filtered, seed);
   const picks = shuffled.slice(0, Math.max(0, maxChoices));
 
   return picks.map((key) => {

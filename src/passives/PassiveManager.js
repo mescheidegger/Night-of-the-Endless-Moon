@@ -127,6 +127,7 @@ export class PassiveManager {
     if (shouldEnforceStackGate) {
       const currentLevel = Number(this.scene?.levelSystem?.level ?? 1);
       const canGrant = canGrantNextStack({
+        passiveKey: key,
         level: currentLevel,
         currentCount,
         config: LEVEL_UP
