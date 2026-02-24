@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TreasureModalFx } from '../fx/index.js';
 
 const PANEL_WIDTH = 520;
 const PANEL_HEIGHT = 250;
@@ -7,7 +8,7 @@ const BUTTON_WIDTH = 180;
 const BUTTON_HEIGHT = 56;
 
 export class TreasurePickupModal {
-  constructor(scene, { onClose, depthBase = 0 } = {}) {
+  constructor(scene, { onClose, depthBase = 0, treasureType = 'default' } = {}) {
     this.scene = scene;
     this.onClose = onClose;
     this._closed = false;
@@ -16,8 +17,6 @@ export class TreasurePickupModal {
 
     // ✅ IMPORTANT: actually pause the simulation (what LevelUpFlow does)
     this.scene?._acquireSimulationPause?.(this._pauseSource);
-    // (If you ever call pause.acquire directly elsewhere, this also works:)
-    // this.scene?.pause?.acquire?.(this._pauseSource);
 
     const { width, height } = scene.scale;
     const baseDepth = Number.isFinite(depthBase) ? depthBase : 0;
@@ -64,10 +63,19 @@ export class TreasurePickupModal {
 
     this.container.add([panel, title, body, this.okButton]);
 
+    this.treasureFx = new TreasureModalFx();
+    this.treasureFx.attach({
+      scene,
+      anchorContainer: this.container,
+      depthBase: panelDepth,
+      variant: treasureType
+    });
+
     this._onResize = (size) => {
       if (!size) return;
       this.backdrop.setSize(size.width, size.height);
       this.container.setPosition(size.width / 2, size.height / 2);
+      this.treasureFx?.onResize?.();
     };
     scene.scale.on('resize', this._onResize);
 
@@ -107,7 +115,10 @@ export class TreasurePickupModal {
     hit.on('pointerover', () => bg.setFillStyle(0x63307a, 1));
     hit.on('pointerout', reset);
     hit.on('pointerdown', () => bg.setFillStyle(0x351046, 1));
-    hit.on('pointerup', () => { reset(); this.close(); });
+    hit.on('pointerup', () => {
+      reset();
+      this.close();
+    });
     hit.on('pointerupoutside', reset);
 
     root.add([bg, label, hit]);
@@ -136,7 +147,6 @@ export class TreasurePickupModal {
 
     // ✅ IMPORTANT: resume simulation
     this.scene?._releaseSimulationPause?.(this._pauseSource);
-    // or: this.scene?.pause?.release?.(this._pauseSource);
 
     this.onClose?.();
     this.destroy();
@@ -151,6 +161,9 @@ export class TreasurePickupModal {
 
     this.scene?.scale?.off?.('resize', this._onResize);
 
+    // Kill FX first (so it can't reference a torn-down scene/container)
+    this.treasureFx?.destroy?.();
+
     this.okButton?.destroy(true);
     this.container?.destroy(true);
     this.backdrop?.destroy();
@@ -158,6 +171,7 @@ export class TreasurePickupModal {
     this.okButton = null;
     this.container = null;
     this.backdrop = null;
+    this.treasureFx = null;
     this.onClose = null;
     this.scene = null;
   }

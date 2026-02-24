@@ -52,10 +52,11 @@ export class PauseController {
     // Pause modes:
     // - pauseMenu: hard pause time + physics
     // - levelup: pause time only, but freeze bodies to prevent drift
+    // - treasurePickup: pause time only, but freeze bodies to prevent drift
     // - bossDeath: keep time running for cinematics, but pause physics + freeze bodies
     const pausePhysics = (source === 'pauseMenu' || source === 'bossDeath');
-    const freezeBodies = (source === 'levelup' || source === 'bossDeath');
-    const pauseTime = (source === 'pauseMenu' || source === 'levelup');
+    const freezeBodies = (source === 'levelup' || source === 'bossDeath' || source === 'treasurePickup');
+    const pauseTime = (source === 'pauseMenu' || source === 'levelup' || source === 'treasurePickup');
     const pauseHeroAnim = (source === 'pauseMenu' || source === 'bossDeath');
 
     const heroSprite = scene.hero?.sprite ?? null;

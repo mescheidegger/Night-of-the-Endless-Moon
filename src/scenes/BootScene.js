@@ -138,6 +138,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('largexpgem', '/assets/sprites/gems/largexpgem.png');
     this.load.image('minorhealth', '/assets/sprites/gems/minorhealth.png');
     this.load.image('majorhealth', '/assets/sprites/gems/majorhealth.png');
+    this.load.image('coin', '/assets/sprites/gems/goldcoin.png');
     this.load.spritesheet('treasures_sheet', '/assets/sprites/gems/treasures.png', {
       frameWidth: 32,
       frameHeight: 32,
